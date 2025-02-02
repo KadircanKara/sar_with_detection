@@ -18,7 +18,6 @@ def max_cell_visits(sol:PathSolution):
 def limit_cell_range(sol:PathSolution):
     drone_num_cells = np.append(abs(np.diff(np.array(sol.start_points))), (sol.info.number_of_cells - sol.start_points[-1]))
     cell_range = max(drone_num_cells) - min(drone_num_cells)
-    # test
 
     return cell_range - 3
 

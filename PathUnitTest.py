@@ -30,7 +30,9 @@ from pymoo.core.termination import Termination, NoTermination
 from pymoo.termination import get_termination
 from PathTermination import WeightedSumTermination
 
-from GoogleDriveUpload import authenticate, upload_file, PARENT_FOLDER_ID_DICT
+if os.path.isfile("GoogleDriveUpload.py"):
+    from GoogleDriveUpload import authenticate, upload_file, PARENT_FOLDER_ID_DICT
+
 
 class PathUnitTest(object):
 
