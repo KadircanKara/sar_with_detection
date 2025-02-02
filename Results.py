@@ -16,7 +16,8 @@ from Connectivity import calculate_disconnected_timesteps
 from PathInput import *
 from PathInfo import *
 from PathFuncDict import model_metric_info
-from GoogleDriveUpload import upload_file, authenticate, PARENT_FOLDER_ID_DICT
+if os.path.isfile("GoogleDriveUpload.py"):
+    from GoogleDriveUpload import upload_file, authenticate, PARENT_FOLDER_ID_DICT
 
 # from Report import get_attribute
 
