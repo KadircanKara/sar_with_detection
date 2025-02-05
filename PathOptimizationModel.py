@@ -49,7 +49,7 @@ TC_MOO_NSGA3 = {
 # TT MODELS
 TT_SOO_GA = {
     'Type': 'SOO',
-    'Exp':'TC',
+    'Exp':'TT',
     'Alg': "GA",
     'F': ["Mission Time and Max Mean TBV Weighted Sum"],
     'G': ['Max Mission Time', 'Min Percentage Connectivity'],
@@ -57,7 +57,7 @@ TT_SOO_GA = {
 }
 TT_MOO_NSGA2 = {
     'Type': 'MOO',
-    'Exp':'TC',
+    'Exp':'TT',
     'Alg': "NSGA2",
     'F': ["Mission Time", "Max Mean TBV"],
     'G': ['Max Mission Time', 'Min Percentage Connectivity'],
@@ -65,7 +65,7 @@ TT_MOO_NSGA2 = {
 }
 TT_MOO_NSGA3 = {
     'Type': 'MOO',
-    'Exp':'TC',
+    'Exp':'TT',
     'Alg': "NSGA3",
     'F': ["Mission Time", "Max Mean TBV"],
     'G': ['Max Mission Time', 'Min Percentage Connectivity'],

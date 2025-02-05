@@ -40,7 +40,7 @@ class PathInfo(object):
         self.comm_dist = self.comm_cell_range * self.cell_side_length
         self.n_visits = scenario_dict['n_visits'] if scenario_dict else default_scenario['n_visits']
         self.occ_grid = np.full(shape=(self.number_of_nodes, self.number_of_cells), fill_value=0.5, dtype=float) # Initial occupancy probabilities of cells, 0.5
-        self.th = 0.9 # Minimum occupancy probability for target residency
+        self.th = 0.9 # Minimum occupancy probability to indicate target residency
         self.false_detection_prob = 0.1 # False detection probability
         self.true_detection_prob = 1-self.false_detection_prob # True detection probability
         self.false_miss_prob = 0.1 # False miss probability

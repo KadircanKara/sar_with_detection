@@ -1253,7 +1253,7 @@ def plot_mean_mean_tbv_vs_number_of_drones_with_variance_for_extreme_points(mode
 # model_comparison_heatmap_for_best_objs([time_conn_disconn_tbv_nsga2_model, time_conn_disconn_tbv_nsga3_model], 2, [4,8,12,16], [1,2,3], show=True, save=False)
 
 """Plot Objs"""
-plot_best_objs_for_nvisits(models=[TCDT_MOO_NSGA2], r=[2, 2*sqrt(2)], n=[4], v=[1,2,3], show=True, save=False)
+plot_best_objs_for_nvisits(models=[TCDT_MOO_NSGA2], r=[2, 2*sqrt(2)], n=[4,8,12,16], v=[1,2,3], show=True, save=False)
 
 """Pareto-Front"""
 # plot_pareto_fronts(show=False, save=True)

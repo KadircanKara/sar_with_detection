@@ -30,9 +30,9 @@ scenario = {
                         'n_visits': 1,  # Minimum number of cell visits
                         }
 
-number_of_drones_values = [8]
-comm_cell_range_values = [2]
-n_visits_values = [3]
+number_of_drones_values = [12]
+comm_cell_range_values = [2,2*sqrt(2)]
+n_visits_values = [1,2,3]
 
 
 scenarios = []
@@ -62,7 +62,7 @@ path_mutation = PathMutation({
                     # "reverse sequence": (0.3, 1),
                     "block inversion": (0, 1),
                     # "shift": (0.3, 1),
-                    "random_one_sp_mutation": (0.3, 1), # 1.0 for 4 drones |  0.95 for 8 drones | 0.7 for 12 drones | 0.5 for 16 drones
+                    "random_one_sp_mutation": (0.4, 1), # 1.0 for 4 drones |  0.95 for 8 drones | 0.7 for 12 drones | 0.5 for 16 drones
                     "random_n_sp_mutation": (0.0, 1), # 1.0 for 4 drones |  0.95 for 8 drones | 0.7 for 12 drones | 0.5 for 16 drones
                     "all_sp_mutation": (0.0, 1), # 1.0 for 4 drones |  0.95 for 8 drones | 0.7 for 12 drones | 0.5 for 16 drones
                     "longest_path_sp_mutation": (0.0, 1), # 1.0 for 4 drones |  0.95 for 8 drones | 0.7 for 12 drones | 0.5 for 16 drones
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         # Run scenarios
         for scenario in scenarios:
             test = PathUnitTest(scenario)
-            test(save_results=True, animation=False, copy_to_drive=True)
+            test(save_results=True, animation=False, copy_to_drive=False)
         new_filecount = len(os.listdir(objective_values_filepath))
         filecount_diff = new_filecount - old_filecount
         if filecount_diff == len(scenarios)*2:
