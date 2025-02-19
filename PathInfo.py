@@ -19,6 +19,12 @@ default_scenario = {
     'max_drone_speed': 2.5, # m/s
     'comm_cell_range': 2,  # 2 cells
     'n_visits': 2,  # Minimum number of cell visits
+    'target_positions': [12],
+    'th': 0.9,
+    'false_detection_probability': 0.1,
+    'true_detection_probability': 0.9,
+    'false_miss_probability': 0.1,
+    'true_miss_probability': 0.9,
 }
 
 class PathInfo(object):
@@ -39,12 +45,13 @@ class PathInfo(object):
         self.comm_cell_range = scenario_dict['comm_cell_range'] if scenario_dict else default_scenario['comm_cell_range']
         self.comm_dist = self.comm_cell_range * self.cell_side_length
         self.n_visits = scenario_dict['n_visits'] if scenario_dict else default_scenario['n_visits']
-        self.occ_grid = np.full(shape=(self.number_of_nodes, self.number_of_cells), fill_value=0.5, dtype=float) # Initial occupancy probabilities of cells, 0.5
-        self.th = 0.9 # Minimum occupancy probability to indicate target residency
-        self.false_detection_prob = 0.1 # False detection probability
-        self.true_detection_prob = 1-self.false_detection_prob # True detection probability
-        self.false_miss_prob = 0.1 # False miss probability
-        self.true_miss_prob = 1-self.false_miss_prob # True miss probability
+        self.target_locations = scenario_dict['target_positions'] if scenario_dict else default_scenario['target_positions']
+        # self.occ_grid = np.full(shape=(self.number_of_nodes, self.number_of_cells), fill_value=0.5, dtype=float) # Initial occupancy probabilities of cells, 0.5
+        self.th = scenario_dict['th'] if scenario_dict else default_scenario['th']
+        self.false_detection_prob = scenario_dict['false_detection_probability'] if scenario_dict else default_scenario['false_detection_probability'] 
+        self.true_detection_prob = scenario_dict['true_detection_probability'] if scenario_dict else default_scenario['true_detection_probability'] 
+        self.false_miss_prob = scenario_dict['false_miss_probability'] if scenario_dict else default_scenario['false_miss_probability'] 
+        self.true_miss_prob = scenario_dict['true_miss_probability'] if scenario_dict else default_scenario['true_miss_probability'] 
 
         P = [[i, j] for i in range(self.grid_size) for j in range(self.grid_size)]
         P.append([-1, -1])
@@ -59,7 +66,7 @@ class PathInfo(object):
         else:
             comm_cell_range = self.comm_cell_range
 
-        multi_line_scenario = f'''{self.model['Type']}_{self.model['Alg']}_{self.model['Exp']}_g_{self.grid_size}_a_{self.cell_side_length}_n_{self.number_of_drones}_
+        multi_line_scenario = f'''{self.model['Type']}_{self.model['Alg']}_{self.model['Problem']}_{self.model['Exp']}_g_{self.grid_size}_a_{self.cell_side_length}_n_{self.number_of_drones}_
 v_{self.max_drone_speed}_r_{comm_cell_range}_nvisits_{self.n_visits}'''
 
         lines = multi_line_scenario.splitlines()

@@ -47,8 +47,9 @@ class PathSolution():
             f"Objective Values: totaldistance_{self.total_distance}_longestSubtour_{self.longest_subtour}_percentageConumber_of_nodesectivity_{self.percentage_connectivity}\n" \
             f"Chromosome: pathSequenumber_of_cellse_{self.path}_startPoints_{self.start_points}"
 
-    def __init__(self, path, start_points,  info:PathInfo, calculate_pathplan=False, calculate_tbv=False, calculate_connectivity=False, calculate_disconnectivity=False):
+    def __init__(self, path, start_points,  info:PathInfo, calculate_pathplan=False, implement_detection=False, calculate_tbv=False, calculate_connectivity=False, calculate_disconnectivity=False):
 
+        self.impelement_detection = implement_detection
         self.calculate_tbv = calculate_tbv
         self.calculate_connectivity = calculate_connectivity
         self.calculate_disconnectivity = calculate_disconnectivity
@@ -111,6 +112,9 @@ class PathSolution():
         if calculate_disconnectivity:
             # print("disconnectivity calculations")
             self.do_disconnectivity_calculations()
+
+        if implement_detection:
+            self.update_path_for_detection()
 
 
     def get_drone_dict(self):
@@ -205,12 +209,11 @@ class PathSolution():
             drone_interpolated_last_step_list.append(drone_interpolated_last_step)
         max_interpolated_last_step_len = max([len(x) for x in drone_interpolated_last_step_list])
 
-
         for drone in range(info.number_of_drones):
             if len(drone_interpolated_last_step_list[drone]) < max_interpolated_last_step_len:
                 drone_interpolated_last_step_list[drone].extend([drone_interpolated_last_step_list[drone][-1]] * (max_interpolated_last_step_len - len(drone_interpolated_last_step_list[drone])))
         drone_interpolated_path_array = np.insert(np.array(drone_interpolated_last_step_list), 0, np.full((1,max_interpolated_last_step_len), -1, dtype=int), axis=0)
-        self.real_time_path_matrix = np.hstack((self.real_time_path_matrix[:,:-1], drone_interpolated_path_array, np.full((info.number_of_nodes,1), -1, dtype=int)))
+        self.real_time_path_matrix = np.hstack((self.real_time_path_matrix[:,:-1], drone_interpolated_path_array, np.full((info.number_of_nodes,1), -1, dtype=int)))             
 
         # Calculate Mission Time
         mission_time = 0
@@ -242,6 +245,16 @@ class PathSolution():
 
         self.time_slots = self.real_time_path_matrix.shape[1]
 
+
+    def update_path_for_detection(self):
+
+        info = self.info
+        # print(f"Path before detection:\n{self.real_time_path_matrix
+        occ_grid = np.full(shape=(info.number_of_nodes, info.number_of_cells), fill_value=0.5, dtype=float) # Occupancy grid initialization
+        for step in range(self.real_time_path_matrix.shape[1]):
+            connectivity_matrix = self.connectivity_matrix[step]
+            connected_nodes = connected_components(connectivity_matrix)
+            drone_positions = self.real_time_path_matrix[1:,step]
 
     def get_visit_times(self):
         info = self.info
@@ -376,6 +389,27 @@ class PathSolution():
             x, y = coords
             return floor(y / self.info.cell_side_length) * self.info.grid_size + floor(x / self.info.cell_side_length)
 
+
+def dfs(connectivity_matrix, node, visited, component):
+    visited[node] = True
+    component.append(node)
+    for neighbor, connected in enumerate(connectivity_matrix[node]):
+        if connected == 1 and not visited[neighbor]:
+            dfs(connectivity_matrix, neighbor, visited, component)
+
+
+def connected_components(connectivity_matrix):
+    n = len(connectivity_matrix)
+    visited = [False] * n
+    components = []
+
+    for node in range(n):
+        if not visited[node]:
+            component = []
+            dfs(connectivity_matrix, node, visited, component)
+            components.append(component)
+
+    return components
 
 
 def BFS(adj, sol:PathSolution):

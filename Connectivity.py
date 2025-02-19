@@ -212,6 +212,7 @@ def get_mean_disconnected_time(sol:PathSolution):
 def dfs(connectivity_matrix, node, visited, component):
     visited[node] = True
     component.append(node)
+    # print(connectivity_matrix[node])
     for neighbor, connected in enumerate(connectivity_matrix[node]):
         if connected == 1 and not visited[neighbor]:
             dfs(connectivity_matrix, neighbor, visited, component)
