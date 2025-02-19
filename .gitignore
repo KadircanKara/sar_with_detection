@@ -6,6 +6,6 @@ google_service_account_id.txt
 test.py
 scratch.py
 # Output Folders
-Results/
-Results copy/
-Figures/
+# Results/
+# Results copy/
+# Figures/
