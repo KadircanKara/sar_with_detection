@@ -1,115 +1,45 @@
+from math import ceil, log10
 import numpy as np
 import pandas as pd
-from Results import save_best_solutions
-from PathInfo import *
+# from Results import save_best_solutions
+# from PathInfo import *
 from FilePaths import *
-from PathFileManagement import load_pickle
-from Connectivity import connected_components, PathSolution
-# from Distance import interpolate_between_cities
+# from PathFileManagement import load_pickle
+# from Connectivity import connected_components, PathSolution
 
-def sign(x):
-    return 1 if x > 0 else -1 if x < 0 else 0  # Returns 0 if x is exactly 0
+rows=8
+cols = 10
 
-def interpolate_between_cities(sol:PathSolution, city_prev, city):
+array_of_lists = np.empty((rows, cols), dtype=object)
+for i in range(rows):
+    for j in range(cols):
+        array_of_lists[i, j] = [0.5]  # Assign an empty list to each cell
 
-    interpolated_path = [city_prev]
+array_of_lists[2][0].append(0.2)
+print(array_of_lists[2][0])
 
-    info = sol.info
-    coords_prev = sol.get_coords(city_prev)
-    coords = sol.get_coords(city)
-    coords_delta = coords - coords_prev
-    axis_inc = np.array([sign(coords_delta[0]), sign(coords_delta[1])])
-
-    num_mid_cities = int(max(abs(coords_delta))/info.cell_side_length)
-
-    coords_temp = coords_prev.copy()
-
-    for _ in range(num_mid_cities):
-        if coords_temp[0] != coords[0]:
-            coords_temp[0] += info.cell_side_length * axis_inc[0]
-        if coords_temp[1] != coords[1]:
-            coords_temp[1] += info.cell_side_length * axis_inc[1]
-        mid_city = sol.get_city(coords_temp)
-        interpolated_path.append(mid_city)
-
-    return interpolated_path
+# print(array_of_lists)
+# array_of_lists = np.empty(8, dtype=object)  # Creates an array of 5 empty objects
+# for i in range(8):
+#     array_of_lists[i] = [[0.5]*10]  # Assign empty lists
+# print(array_of_lists)
 
 
-sample_sol_set = load_pickle(f"{solutions_filepath}MOO_NSGA2_MTSP_TT_g_8_a_50_n_8_v_2.5_r_sqrt(8)_nvisits_2-SolutionObjects.pkl").flatten().tolist()
-sample_sol = deepcopy(np.random.choice(sample_sol_set))
-sample_sol.info.target_locations = [12]
-sample_sol.th = 0.9,
-sample_sol.info.false_detection_probability = 0.1
-sample_sol.info.true_detection_probability = 0.9
-sample_sol.info.false_miss_probability = 0.1
-sample_sol.info.true_miss_probability = 0.9
+# test_array = np.full(shape=(8,20), fill_value=[0.5], dtype=list)
+# print(test_array[0])
 
-def update_path_for_detection(self):
+"""F = pd.read_pickle("Results/Objectives/MOO_NSGA2_MTSP_TCDT_g_8_a_50_n_8_v_2.5_r_2_nvisits_3-ObjectiveValues.pkl")
+for col in F.columns:
+    print(f"{col} max val: {F[col].max()}")
+"""
+"""B_values = [0.9, 0.95] # 0.9, 0.95
+p_values = [0.9, 0.8, 0.7] # 0.9, 0.8, 0.7
+# q = 1-p
+p0 = 0.5
 
-    real_time_path_matrix = self.real_time_path_matrix.copy()
-    connectivity_matrix = self.connectivity_matrix.copy()
-    hovering_cells = np.unique([self.drone_dict[i][-3] for i in range(self.info.number_of_drones)])
-    hovering_cells_dists_to_bs = [self.info.D[hovering_cell, -1] for hovering_cell in hovering_cells]
-    hovering_cells_dists_to_bs_sorted = np.unique(sorted(hovering_cells_dists_to_bs))
-    closest_hovering_cells_to_bs = []
-    for i in range(len(hovering_cells_dists_to_bs_sorted)):
-        indices = np.where(hovering_cells_dists_to_bs == hovering_cells_dists_to_bs_sorted[i])[0]
-        for ind in indices:
-            closest_hovering_cells_to_bs.append(hovering_cells[ind])
-        # closest_hovering_cells_to_bs_indices.extend(np.where(hovering_cells_dists_to_bs == hovering_cells_dists_to_bs_sorted[i])[0])
-    available_hovering_cells = closest_hovering_cells_to_bs.copy()
-    # print(closest_hovering_cells_to_bs)
-    
-    info = self.info
-    # print(f"Path before detection:\n{self.real_time_path_matrix
-    occ_grid = np.full(shape=(info.number_of_nodes, info.number_of_cells), fill_value=0.5, dtype=float) # Occupancy grid initialization
-    new_drone_paths_dict = self.drone_dict.copy()
-    drone_search_status = {i: True for i in range(info.number_of_drones)}
-    for step in range(real_time_path_matrix.shape[1]):
-        # Check if all drones have found all target locations and they've returned to BS
-        if True not in drone_search_status.values():
-            break
-        adj = connectivity_matrix[step]
-        connected_nodes = connected_components(adj)
-        drone_positions = real_time_path_matrix[1:,step]
-        for drone_no, drone_position in enumerate(drone_positions):
-            drone_bs_connectivity = False
-            # First, update individual occupancy grid for each drone
-            if drone_position in info.target_locations:
-                # This is where we would apply the bayesian occ prob update, for now we just set it to 1
-                occ_grid[drone_no + 1, drone_position] = 1
-            # Next, update the occupancy grids for each connected component (for now, take the average)
-            for conn_comp in connected_nodes:
-                drone_bs_connectivity = True if drone_no+1 in conn_comp and 0 in conn_comp else None
-                # if drone_no+1 in conn_comp and 0 in conn_comp:
-                #     drone_bs_connectivity = True
-                new_occ_grids = np.zeros(info.number_of_cells)
-                for node in conn_comp:
-                    new_occ_grids += occ_grid[node]
-                new_occ_grids /= len(conn_comp)
-                for node in conn_comp:
-                    occ_grid[node] = new_occ_grids
-            # If drone knows all target locations, fly back to BS
-            if len(np.where(occ_grid[drone_no+1]>=info.th)[0]) >= len(info.target_locations) or drone_bs_connectivity and len(np.where(occ_grid[0]>=info.th)[0]) >= len(info.target_locations) and drone_search_status[drone_no]: # If drone knows all target locations OR BS knows all target locations and is connected to the drone, return to BS
-                drone_search_status[drone_no] = False
-                if len(available_hovering_cells) != 0:
-                    path_back_to_bs = np.hstack(( interpolate_between_cities(self, drone_position, available_hovering_cells[0]), -1 ))
-                    available_hovering_cells.pop(0)
-                else:
-                    path_back_to_bs = np.hstack(( interpolate_between_cities(self, drone_position, 0), -1 ))
-                new_drone_path = np.hstack(( real_time_path_matrix[drone_no+1,:step], path_back_to_bs ))
-                new_drone_paths_dict[drone_no] = new_drone_path
-    self.drone_dict = new_drone_paths_dict
-    self.get_pathplan()
-    print(f"Path after detection:\n{self.real_time_path_matrix}")
-                
-                
-                # path_back_to_bs.append(-1)
-                # print(drone_position)
-                # print(path_back_to_bs)
-                # continue
-                # Interpolate between current position and BS (0. cell)
-                # real_time_path_matrix[drone_no+1, step+1:] = -1
-
-# test
-update_path_for_detection(sample_sol)
+for B in B_values:
+    for p in p_values:
+        q = 1-p
+        m = ceil( log10((p0*(1-B))/(B*(1-p0))) / log10(q/p) )
+        print(f"for B: {B}, p: {p}, # visit(s): {m}")
+# m = ceil( log10((p0*(1-B))/(B*(1-p0))) / log10(q/p) )"""

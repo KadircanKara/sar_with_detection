@@ -243,10 +243,11 @@ SAR_TCDT_SOO_GA = {
     'Type': 'SOO',
     'Exp':'TCDT',
     'Alg': "GA",
-    'F': ["Mission Time-Percentage Connectivity-Max Mean TBV-Max Disconnected Time-Mean Disconnected Time-Max Mean TBV-Weighted Sum"],
+    'F': ['Mission Time', 'Percentage Connectivity', 'Mean Disconnected Time','Max Disconnected Time', 'Max Mean TBV'],
     'G': ['Max Mission Time', 'Min Percentage Connectivity'],
     'H': ['Path Speed Violations as Constraint']
 }
+
 SAR_TCDT_MOO_NSGA2 = {
     'Problem': 'SAR',
     'Type': 'MOO',
@@ -293,6 +294,15 @@ MTSP_TCD_MOO_NSGA3 = {
     'Exp':'TCD',
     'Alg': "NSGA3",
     'F': ['Mission Time', 'Percentage Connectivity', 'Mean Disconnected Time','Max Disconnected Time'],
+    'G': ['Min Percentage Connectivity','Max Mission Time'],
+    'H': ['Path Speed Violations as Constraint']
+}
+MTSP_TCD_SOO_GA = {
+    'Problem': 'MTSP',
+    'Type': 'MOO',
+    'Exp':'TCD',
+    'Alg': "GA",
+    'F': ['Mission Time-Percentage Connectivity-Max Disconnected Time-Mean Disconnected Time-Weighted Sum'],
     'G': ['Min Percentage Connectivity','Max Mission Time'],
     'H': ['Path Speed Violations as Constraint']
 }

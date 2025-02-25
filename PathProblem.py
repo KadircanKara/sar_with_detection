@@ -91,8 +91,22 @@ class PathProblem(ElementwiseProblem):
         # model_functions = get_model_function_values(sol)
         f,g,h=[],[],[]
 
-        if len(model["F"])==1 and '-' in model["F"][0]:
-            f = [0]
+        if len(model["F"])==1 and 'Weighted Sum' in model["F"][0]:
+            objectives = model["F"][0].split("-")[:-1]
+            score = 0
+            for i in range(len(objectives)):
+                obj_name = objectives[i]
+                obj_calc = model_metric_info["Objectives"][obj_name][0]
+                obj_pol = model_metric_info["Objectives"][obj_name][1]
+                if obj_name == 'Mission Time' or obj_name == "Max Mean TBV":
+                    score += obj_calc(sol)/1000*obj_pol
+                elif obj_name == "Max Disconnected Time":
+                    score += obj_calc(sol)/sol.real_time_path_matrix.shape[1]*obj_pol
+                elif obj_name == "Mean Disconnected Time":
+                    score += obj_calc(sol)/10*obj_pol
+                else: # Only on Percentage Connectivity basically
+                    score += obj_calc(sol)*obj_pol   
+            f.append(score)
         else:
             for i in range(self.n_obj):
                 obj_name = self.model['F'][i]

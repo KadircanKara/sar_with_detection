@@ -21,10 +21,7 @@ default_scenario = {
     'n_visits': 2,  # Minimum number of cell visits
     'target_positions': [12],
     'th': 0.9,
-    'false_detection_probability': 0.1,
-    'true_detection_probability': 0.9,
-    'false_miss_probability': 0.1,
-    'true_miss_probability': 0.9,
+    'detection_probability': 0.7,
 }
 
 class PathInfo(object):
@@ -48,10 +45,11 @@ class PathInfo(object):
         self.target_locations = scenario_dict['target_positions'] if scenario_dict else default_scenario['target_positions']
         # self.occ_grid = np.full(shape=(self.number_of_nodes, self.number_of_cells), fill_value=0.5, dtype=float) # Initial occupancy probabilities of cells, 0.5
         self.th = scenario_dict['th'] if scenario_dict else default_scenario['th']
-        self.false_detection_prob = scenario_dict['false_detection_probability'] if scenario_dict else default_scenario['false_detection_probability'] 
-        self.true_detection_prob = scenario_dict['true_detection_probability'] if scenario_dict else default_scenario['true_detection_probability'] 
-        self.false_miss_prob = scenario_dict['false_miss_probability'] if scenario_dict else default_scenario['false_miss_probability'] 
-        self.true_miss_prob = scenario_dict['true_miss_probability'] if scenario_dict else default_scenario['true_miss_probability'] 
+        self.detection_probability = scenario_dict['detection_probability'] if scenario_dict else default_scenario['detection_probability']
+        self.miss_probability = 1-self.detection_probability
+        # self.true_detection_prob = scenario_dict['true_detection_probability'] if scenario_dict else default_scenario['true_detection_probability'] 
+        # self.false_miss_prob = scenario_dict['false_miss_probability'] if scenario_dict else default_scenario['false_miss_probability'] 
+        # self.true_miss_prob = scenario_dict['true_miss_probability'] if scenario_dict else default_scenario['true_miss_probability'] 
 
         P = [[i, j] for i in range(self.grid_size) for j in range(self.grid_size)]
         P.append([-1, -1])

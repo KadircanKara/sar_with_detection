@@ -14,12 +14,11 @@ from PathInput import *
 
 
 """Algoriithms To RUN"""
-# TODO: Conn SOO -
-# TODO: Time SOO -
-# TODO: TCDT SOO - 
-# TODO: TCDT MOO - IP (Only 3 visits on this machine)
-# TODO: TCT MOO -
-# TODO: TCT SOO -
+# TCDT WS
+# TCD WS
+# TT WS
+
+# !!! DON'T FORGET n=4, r=2*sqrt(2) runs, you skipped those !!!
 
 scenario = {
                         'grid_size': 8,
@@ -30,9 +29,9 @@ scenario = {
                         'n_visits': 1,  # Minimum number of cell visits
                         }
 
-number_of_drones_values = [16]
+number_of_drones_values = [4]
 comm_cell_range_values = [2,2*sqrt(2)]
-n_visits_values = [3]
+n_visits_values = [4,5]
 
 
 scenarios = []
@@ -40,14 +39,17 @@ for v in n_visits_values:
     for n in number_of_drones_values:
         for r in comm_cell_range_values:
             scenarios.append(
-                {'grid_size': 8,
-                    'cell_side_length': 50,
-                    'number_of_drones': n,
-                    'max_drone_speed': 2.5, # m/s
-                    'comm_cell_range': r,  # 4 cells
-                    'n_visits': v,  # Minimum number of cell visits
-                }
-            )
+                    {   'grid_size': 8,
+                        'cell_side_length': 50,
+                        'number_of_drones': n,
+                        'max_drone_speed': 2.5, # m/s
+                        'comm_cell_range': r,  # 4 cells
+                        'n_visits': v,  # Minimum number of cell visits
+                        'target_positions': [12],
+                        'th': 0.9,
+                        'detection_probability':0.7
+                    }
+                )
 
 # SAMPLING
 path_sampling = PathSampling()
