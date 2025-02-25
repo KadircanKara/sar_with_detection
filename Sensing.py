@@ -70,10 +70,11 @@ def generate_sar_paths(sol:PathSolution, merging_strategy="belief", target_locat
     rows, cols = search_map.shape
     for i in range(rows):
         for j in range(cols):
-            search_map[i, j] = {"timestep":-1, "beliefs":[0.5]}  # Assign an empty list to each cell
+            search_map[i, j] = {"timestep":-1, "belief":0.5, "num_obs":0}  # Assign an empty list to each cell
     # search_map = create_array_of_lists(rows=info.number_of_nodes, cols=info.number_of_cells, fill_value=0.5)
     # search_map = np.full(shape=(info.number_of_nodes, info.number_of_cells), fill_value=[0.5], dtype=list)    # np.full(shape=(info.n_visits, info.number_of_nodes, info.number_of_cells), fill_value=0.5, dtype=float) # Occupancy grid initialization
     for step in range(real_time_path_matrix.shape[1]):
+        node_positions = real_time_path_matrix[:,step]
         drone_positions = real_time_path_matrix[1:,step]
         # First, do uncoordinated search map updates
         for drone in range(info.number_of_drones):
@@ -81,17 +82,43 @@ def generate_sar_paths(sol:PathSolution, merging_strategy="belief", target_locat
             # First update the timestep of the drone's last observation
             search_map[drone+1, drone_position]["timestep"] = step
             # Then, calculate new cell occupancy belief according to whether the drone is at a target location or not
-            prior_obs = search_map[drone+1, drone_position]["beliefs"][-1]
+            prior_obs = search_map[drone+1, drone_position]["belief"]
             if drone_position in target_locations:
                 new_obs = p*prior_obs / (p*prior_obs + q*(1-prior_obs))
             else:
                 new_obs = (1-p)*prior_obs / ((1-p)*prior_obs + (1-q)*(1-prior_obs))
-            # Add the new observation to the drone's search map
-            search_map[drone+1, drone_position]["beliefs"].append(new_obs)
+            # Set the new observation in drone's search map
+            search_map[drone+1, drone_position]["belief"] = new_obs
+            # Update the number of observations attribute
+            search_map[drone+1, drone_position]["num_obs"] += 1
 
-        # Then, apply map merginig with a selected method (belief, average, occ grid merging, sensed data sharing)
+        # Share information
         adj = connectivity_matrix[step]
         conn_comp = connected_components(adj)
+        # print(f"Adj Mat:\n{adj}\nConn Comp:\n{conn_comp}")
+        for clique in conn_comp:
+            # nodes_in_cliuqe = clique.copy()
+            clique_positions = real_time_path_matrix[clique, step]
+            if len(np.unique(clique_positions)) == len(clique_positions):
+                print(f"Unique visits - clique: {clique}, clique positions: {clique_positions}")
+                # If all drones in the clique are in different cells, share their search maps
+                for node in clique:
+                    receivers = [x for x in clique if x != node]
+                    cell_no = node_positions[node]
+                    msg = search_map[node][node_positions[node]] 
+                    for receiver_node in receivers:
+                        search_map[receiver_node, cell_no] = msg
+            else:
+                print(f"Concurrent visits detected ! - clique: {clique}, clique positions: {clique_positions}")
+
+    #     print(f"step {step} completed")
+    # print("Search map generation completed")
+    # for loc in target_locations: 
+    #     print(f"target cell {loc} search map: {search_map[:,loc]}")
+
+
+
+"""
         if merging_strategy == "belief":
             belief_merging(sol=sol, conn_comp=conn_comp, search_map=search_map)
         elif merging_strategy == "average":
@@ -100,7 +127,7 @@ def generate_sar_paths(sol:PathSolution, merging_strategy="belief", target_locat
             occ_grid_merging(sol=sol, conn_comp=conn_comp, search_map=search_map)
         elif merging_strategy == "sensed_data":
             sensed_data_merging(sol=sol, conn_comp=conn_comp, search_map=search_map)
-
+"""
         
 
 def update_path_for_detection(self):
@@ -180,7 +207,7 @@ def update_path_for_detection(self):
                 # real_time_path_matrix[drone_no+1, step+1:] = -1
 
 # test
-sample_sol_set = load_pickle(f"{solutions_filepath}MOO_NSGA2_MTSP_TT_g_8_a_50_n_8_v_2.5_r_sqrt(8)_nvisits_2-SolutionObjects.pkl").flatten().tolist()
+sample_sol_set = load_pickle(f"{solutions_filepath}MOO_NSGA2_MTSP_TT_g_8_a_50_n_8_v_2.5_r_sqrt(8)_nvisits_3-SolutionObjects.pkl").flatten().tolist()
 sample_sol = deepcopy(np.random.choice(sample_sol_set))
 sample_sol.info.target_locations = [12]
 sample_sol.th = 0.9,
@@ -188,4 +215,4 @@ sample_sol.info.false_detection_probability = 0.1
 sample_sol.info.true_detection_probability = 0.9
 sample_sol.info.false_miss_probability = 0.1
 sample_sol.info.true_miss_probability = 0.9
-generate_sar_paths(sample_sol, merging_strategy="belief", target_locations=[12], B=0.9, p=0.9, q=0.2)
+generate_sar_paths(sample_sol, merging_strategy="belief", target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)

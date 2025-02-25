@@ -1,6 +1,6 @@
 
 import numpy as np
-from numpy.lib.function_base import average
+# from numpy.lib.function_base import average
 from pymoo.core.problem import ElementwiseProblem
 from scipy.spatial import distance
 from typing import List, Dict
