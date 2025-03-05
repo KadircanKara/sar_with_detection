@@ -117,6 +117,7 @@ class PathSolution():
             self.update_path_for_detection()
 
 
+
     def get_drone_dict(self):
 
         self.drone_dict = dict()
@@ -245,16 +246,6 @@ class PathSolution():
 
         self.time_slots = self.real_time_path_matrix.shape[1]
 
-
-    def update_path_for_detection(self):
-
-        info = self.info
-        # print(f"Path before detection:\n{self.real_time_path_matrix
-        occ_grid = np.full(shape=(info.number_of_nodes, info.number_of_cells), fill_value=0.5, dtype=float) # Occupancy grid initialization
-        for step in range(self.real_time_path_matrix.shape[1]):
-            connectivity_matrix = self.connectivity_matrix[step]
-            connected_nodes = connected_components(connectivity_matrix)
-            drone_positions = self.real_time_path_matrix[1:,step]
 
     def get_visit_times(self):
         info = self.info

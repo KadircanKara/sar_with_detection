@@ -60,6 +60,38 @@ def occ_grid_merging():
 def sensed_data_merging():
     pass
 
+
+def info_sharing(sol:PathSolution, target_locations=[12], B=0.9, p=0.9, q=0.2):
+    """
+    Integrate search map to already generated pathplans
+    sol: PathSolution object
+    target_locations: list of target locations
+    B: occupancy threshold
+    p: probability of detection
+    q: probability of false alarm
+    """
+    # Make a deep copy of the solution object to avoid modifying the original object
+    x = deepcopy(sol)
+    # Slice path matrix in such a way that only steps between the 1st step and the first hovering steps are taken because we do'nt take measurements while hovering
+    # and at the first step because each drone goes to cell 0 at the first step to avoid going outside the map
+    start = 1
+    hovering_cells = [seq[-1] for seq in list(x.drone_dict.values())]
+    print(f"Path Matrix:\n{list(x.drone_dict.values())}\nHovering Cells:\n{hovering_cells}")
+    return
+    drone_path_matrix = x.real_time_path_matrix[1:,:]
+    path_matrix = x.real_time_path_matrix
+    connectivity_matrix = x.connectivity_matrix
+    info = x.info
+    # Initialize search map
+    SM = np.empty((sol.info.number_of_nodes, sol.info.number_of_cells), dtype=object)
+    rows, cols = SM.shape
+    for i in range(rows):
+        for j in range(cols):
+            SM[i, j] = {"timestep":-1, "occ_prob":0.5} # Start at timestep=-1 to indicate that this is the prior belief
+    # TODO: Asynchronous Search Map(SM) Update
+
+
+
 def generate_sar_paths(sol:PathSolution, merging_strategy="belief", target_locations=[12], B=0.9, p=0.9, q=0.2):
     x = deepcopy(sol)
     real_time_path_matrix = x.real_time_path_matrix
@@ -215,4 +247,5 @@ sample_sol.info.false_detection_probability = 0.1
 sample_sol.info.true_detection_probability = 0.9
 sample_sol.info.false_miss_probability = 0.1
 sample_sol.info.true_miss_probability = 0.9
-generate_sar_paths(sample_sol, merging_strategy="belief", target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)
+# generate_sar_paths(sample_sol, merging_strategy="belief", target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)
+info_sharing(sample_sol, target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)
