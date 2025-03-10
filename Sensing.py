@@ -72,14 +72,31 @@ def info_sharing(sol:PathSolution, target_locations=[12], B=0.9, p=0.9, q=0.2):
     """
     # Make a deep copy of the solution object to avoid modifying the original object
     x = deepcopy(sol)
+    info = x.info
     # Slice path matrix in such a way that only steps between the 1st step and the first hovering steps are taken because we do'nt take measurements while hovering
     # and at the first step because each drone goes to cell 0 at the first step to avoid going outside the map
-    start = 1
-    hovering_cells = [seq[-1] for seq in list(x.drone_dict.values())]
-    print(f"Path Matrix:\n{list(x.drone_dict.values())}\nHovering Cells:\n{hovering_cells}")
-    return
+    hovering_cells = [seq[-2] for seq in list(x.drone_dict.values())]
+    final_search_steps = [np.where(x.real_time_path_matrix[i+1,2:]==hovering_cells[i])[0][info.n_visits-1]+2 for i in range(info.number_of_drones)]
+    path_seq = np.array(x.path)
+    cell_0_indices = np.where(path_seq==0)[0]
+    # print(f"Path: {path_seq}")
+    # print(cell_0_indices)
+    # print(x.start_points)
+    drones_with_cell_0_as_first_step = []
+    for idx in cell_0_indices:
+        drones_with_cell_0_as_first_step.append(x.start_points.tolist().index(idx)) if idx in x.start_points else None
+    # print(drones_with_cell_0_as_first_step)
+
+    # print(f"Path Matrix:\n{x.real_time_path_matrix}")
+    ## print(f"Drone Dict: {x.drone_dict}")
+    # print(len(np.where(x.real_time_path_matrix[:,2:max(final_search_steps)+1]==60)[0]))
+    # print(f"Hovering Cells:{hovering_cells} Final Search Steps: {final_search_steps}")
+    # print(f"Path Matrix:\n{x.real_time_path_matrix}\nDrone Dict:\n{x.drone_dict}\nHovering Cells:\n{hovering_cells}\nFinal Search Steps:\n{final_search_steps}")
+    # return
+    # print(f"Path Matrix:\n{list(x.drone_dict.values())}\nHovering Cells:\n{hovering_cells}")
     drone_path_matrix = x.real_time_path_matrix[1:,:]
-    path_matrix = x.real_time_path_matrix
+    number_of_drones, timesteps = drone_path_matrix.shape
+    # path_matrix = x.real_time_path_matrix
     connectivity_matrix = x.connectivity_matrix
     info = x.info
     # Initialize search map
@@ -87,8 +104,50 @@ def info_sharing(sol:PathSolution, target_locations=[12], B=0.9, p=0.9, q=0.2):
     rows, cols = SM.shape
     for i in range(rows):
         for j in range(cols):
-            SM[i, j] = {"timestep":-1, "occ_prob":0.5} # Start at timestep=-1 to indicate that this is the prior belief
-    # TODO: Asynchronous Search Map(SM) Update
+            SM[i, j] = [{"timestep":-1, "occ_prob":0.5}] # Start at timestep=-1 to indicate that this is the prior belief
+    for step in range(1,max(final_search_steps)):
+        adj_mat = connectivity_matrix[step]
+        connected_nodes = connected_components(adj_mat)
+        # TODO: Asynchronous Search Map(SM) Update
+        for drone in range(number_of_drones):
+            if step == 1 and drone not in drones_with_cell_0_as_first_step or step > final_search_steps[drone]:
+                continue
+            else:
+                drone_position = drone_path_matrix[drone, step]
+                # Then, calculate new cell occupancy belief according to whether the drone is at a target location or not
+                # print(SM[drone+1, drone_position][-1])
+                prior_obs = SM[drone+1, drone_position][-1]["occ_prob"]
+                if drone_position in target_locations:
+                    new_obs = p*prior_obs / (p*prior_obs + q*(1-prior_obs))
+                else:
+                    new_obs = (1-p)*prior_obs / ((1-p)*prior_obs + (1-q)*(1-prior_obs))
+                # Set the new observation in drone's search map
+                # Update the number of observations attribute
+                SM[drone+1, drone_position].append( {"timestep":step, "occ_prob":new_obs} )
+                # print("-->", SM[drone+1, drone_position][-1])
+        # TODO: Info Merging
+        for clique in connected_nodes:
+            # print(f"Clique: {clique}")
+            SM_clique = SM[clique]
+            # print(f"Pre-Merge: {SM_clique}")
+            for cell in range(info.number_of_cells):
+                combined_cell_info = SM_clique[:,cell].flatten().tolist()
+                print(combined_cell_info)
+                # print(SM[clique][cell])
+                for node in clique:
+                    SM[node][cell] = combined_cell_info
+                    # print(f"--> {SM[node][cell]}")
+            # print(f"Post-Merge: {SM[clique]}")
+        
+    #     print(f"step {step} completed")
+    # print("Search map generation completed")
+    # for loc in target_locations: 
+    #     print(f"target cell {loc} search map: {SM[:,loc]}")
+
+                        
+
+
+
 
 
 
@@ -239,13 +298,15 @@ def update_path_for_detection(self):
                 # real_time_path_matrix[drone_no+1, step+1:] = -1
 
 # test
-sample_sol_set = load_pickle(f"{solutions_filepath}MOO_NSGA2_MTSP_TT_g_8_a_50_n_8_v_2.5_r_sqrt(8)_nvisits_3-SolutionObjects.pkl").flatten().tolist()
-sample_sol = deepcopy(np.random.choice(sample_sol_set))
-sample_sol.info.target_locations = [12]
-sample_sol.th = 0.9,
-sample_sol.info.false_detection_probability = 0.1
-sample_sol.info.true_detection_probability = 0.9
-sample_sol.info.false_miss_probability = 0.1
-sample_sol.info.true_miss_probability = 0.9
+number_of_drones = 8
+nvisits = 3
+comm_range = "sqrt(8)"
+model = "TCDT"
+sol_set = deepcopy(load_pickle(f"{solutions_filepath}MOO_NSGA2_MTSP_{model}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{nvisits}-SolutionObjects.pkl").flatten().tolist())
+F = deepcopy(pd.read_pickle(f"{objective_values_filepath}MOO_NSGA2_MTSP_{model}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{nvisits}-ObjectiveValues.pkl"))
+best_conn_idx = F["Percentage Connectivity"].idxmin()
+best_conn_sol = sol_set[best_conn_idx]
+random_sol = np.random.choice(sol_set)
+
 # generate_sar_paths(sample_sol, merging_strategy="belief", target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)
-info_sharing(sample_sol, target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)
+info_sharing(best_conn_sol, target_locations=[12,15,8], B=0.9, p=0.9, q=0.2)

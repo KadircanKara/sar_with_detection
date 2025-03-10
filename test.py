@@ -7,16 +7,17 @@ from FilePaths import *
 # from PathFileManagement import load_pickle
 # from Connectivity import connected_components, PathSolution
 
-rows=8
-cols = 10
+array = np.array([ [1,2,3], [4,5,6], [7,8,9] ])
+flat_array = array.flatten()
+print(flat_array)
 
-array_of_lists = np.empty((rows, cols), dtype=object)
-for i in range(rows):
-    for j in range(cols):
-        array_of_lists[i, j] = [0.5]  # Assign an empty list to each cell
+# rows=8
+# cols = 10
 
-array_of_lists[2][0].append(0.2)
-print(array_of_lists[2][0])
+# array_of_lists = np.empty((rows, cols), dtype=object)
+# for i in range(rows):
+#     for j in range(cols):
+#         array_of_lists[i, j] = [0.5]  # Assign an empty list to each cell
 
 # print(array_of_lists)
 # array_of_lists = np.empty(8, dtype=object)  # Creates an array of 5 empty objects
