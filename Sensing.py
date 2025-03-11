@@ -77,54 +77,42 @@ def info_sharing(sol:PathSolution, target_locations=[12], B=0.9, p=0.9, q=0.2):
     # and at the first step because each drone goes to cell 0 at the first step to avoid going outside the map
     hovering_cells = [seq[-2] for seq in list(x.drone_dict.values())]
     final_search_steps = [np.where(x.real_time_path_matrix[i+1,2:]==hovering_cells[i])[0][info.n_visits-1]+2 for i in range(info.number_of_drones)]
-    path_seq = np.array(x.path)
-    cell_0_indices = np.where(path_seq==0)[0]
-    # print(f"Path: {path_seq}")
-    # print(cell_0_indices)
-    # print(x.start_points)
-    drones_with_cell_0_as_first_step = []
-    for idx in cell_0_indices:
-        drones_with_cell_0_as_first_step.append(x.start_points.tolist().index(idx)) if idx in x.start_points else None
-    # print(drones_with_cell_0_as_first_step)
+    # path_seq = np.array(x.path)
+    # cell_0_indices = np.where(path_seq==0)[0]
+    # drones_with_cell_0_as_first_step = []
+    # for idx in cell_0_indices:
+    #     drones_with_cell_0_as_first_step.append(x.start_points.tolist().index(idx)) if idx in x.start_points else None
 
-    # print(f"Path Matrix:\n{x.real_time_path_matrix}")
-    ## print(f"Drone Dict: {x.drone_dict}")
-    # print(len(np.where(x.real_time_path_matrix[:,2:max(final_search_steps)+1]==60)[0]))
-    # print(f"Hovering Cells:{hovering_cells} Final Search Steps: {final_search_steps}")
-    # print(f"Path Matrix:\n{x.real_time_path_matrix}\nDrone Dict:\n{x.drone_dict}\nHovering Cells:\n{hovering_cells}\nFinal Search Steps:\n{final_search_steps}")
-    # return
-    # print(f"Path Matrix:\n{list(x.drone_dict.values())}\nHovering Cells:\n{hovering_cells}")
     drone_path_matrix = x.real_time_path_matrix[1:,:]
     number_of_drones, timesteps = drone_path_matrix.shape
-    # path_matrix = x.real_time_path_matrix
     connectivity_matrix = x.connectivity_matrix
     info = x.info
-    # Initialize search map
-    SM = np.empty((sol.info.number_of_nodes, sol.info.number_of_cells), dtype=object)
-    rows, cols = SM.shape
+    # Initialize search maps (Async. and sync.)
+    async_search_map = np.empty((sol.info.number_of_nodes, sol.info.number_of_cells), dtype=object)
+    rows, cols = async_search_map.shape
     for i in range(rows):
         for j in range(cols):
-            SM[i, j] = [{"timestep":-1, "occ_prob":0.5}] # Start at timestep=-1 to indicate that this is the prior belief
-    for step in range(1,max(final_search_steps)):
+            async_search_map[i, j] = {"n_obs":0, "timestep":-1, "prob":0.5} # Start at timestep=-1 to indicate that this is the prior belief
+    sync_search_map = async_search_map.copy()
+    for step in range(max(final_search_steps)):
         adj_mat = connectivity_matrix[step]
         connected_nodes = connected_components(adj_mat)
-        # TODO: Asynchronous Search Map(SM) Update
+        # TODO: Asynchronous Search Map Update
         for drone in range(number_of_drones):
-            if step == 1 and drone not in drones_with_cell_0_as_first_step or step > final_search_steps[drone]:
+            # If drone is in hovering state, continue
+            if step > final_search_steps[drone]:
                 continue
             else:
+                async_search_map[drone+1, drone_position]["timestep"] = step # Update timestep
+                async_search_map[drone+1, drone_position]["n_obs"] += 1 # Increment number of observations (i.e. n_obs)
+                # Update occupancy probability in the async. search map
                 drone_position = drone_path_matrix[drone, step]
-                # Then, calculate new cell occupancy belief according to whether the drone is at a target location or not
-                # print(SM[drone+1, drone_position][-1])
-                prior_obs = SM[drone+1, drone_position][-1]["occ_prob"]
+                prior_obs = async_search_map[drone+1, drone_position]["prob"]
                 if drone_position in target_locations:
                     new_obs = p*prior_obs / (p*prior_obs + q*(1-prior_obs))
                 else:
                     new_obs = (1-p)*prior_obs / ((1-p)*prior_obs + (1-q)*(1-prior_obs))
-                # Set the new observation in drone's search map
-                # Update the number of observations attribute
-                SM[drone+1, drone_position].append( {"timestep":step, "occ_prob":new_obs} )
-                # print("-->", SM[drone+1, drone_position][-1])
+                async_search_map[drone+1, drone_position] = {"timestep":step, "occ_prob":new_obs}
         # TODO: Info Merging
         for clique in connected_nodes:
             # print(f"Clique: {clique}")
