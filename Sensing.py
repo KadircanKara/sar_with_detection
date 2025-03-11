@@ -116,9 +116,11 @@ def info_sharing(sol:PathSolution, target_locations=[12], B=0.9, p=0.9, q=0.2):
         # TODO: Info Merging
         for clique in connected_nodes:
             # print(f"Clique: {clique}")
-            SM_clique = SM[clique]
-            # print(f"Pre-Merge: {SM_clique}")
+            clique_async_search_map = async_search_map[clique]
+            clique_sync_search_map = sync_search_map[clique]
             for cell in range(info.number_of_cells):
+                clique_async_cell_info = clique_async_search_map[:,cell]
+                clique_sync_cell_info = clique_sync_search_map[:,cell]
                 combined_cell_info = SM_clique[:,cell].flatten().tolist()
                 print(combined_cell_info)
                 # print(SM[clique][cell])
