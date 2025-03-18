@@ -3,8 +3,8 @@ google_drive_upload.json
 GoogleDriveUpload.py
 google_service_account_id.txt
 # Testing scripts
-test.py
-scratch.py
+# test.py
+# scratch.py
 # Output Folders
 # Results/
 # Results copy/
