@@ -81,7 +81,7 @@ def interpolate_between_cities(sol:PathSolution, city_prev, city):
     return new_search_map
 """
 
-def merge_maps(conn_comp, search_map):
+def merge_maps(conn_comp, search_map, merging_strategy="ondrone"):
     new_search_map = copy.deepcopy(search_map)
     number_of_nodes, number_of_cells = search_map.shape
     number_of_nodes = number_of_nodes - 1
@@ -125,7 +125,7 @@ def merge_maps(conn_comp, search_map):
 
     return new_search_map
 
-def sensing_and_info_sharing(sol, target_locations=[12], B=0.9, p=0.9, q=0.2):
+def sensing_and_info_sharing(sol, merging_strategy="ondrone", target_locations=[12], B=0.9, p=0.9, q=0.2):
     # Make a deep copy of the solution object to avoid modifying the original object
     x = copy.deepcopy(sol)
     info = x.info
@@ -149,7 +149,10 @@ def sensing_and_info_sharing(sol, target_locations=[12], B=0.9, p=0.9, q=0.2):
 
     for step in range(max(final_search_steps)):
         adj_mat = connectivity_matrix[step]
-        conn_comp = connected_components(adj_mat)
+        if merging_strategy == "ondrone":
+            conn_comp = connected_components(adj_mat)
+        else:
+            conn_comp = [list(range(info.number_of_nodes))]
         search_map = merge_maps(conn_comp, search_map)
         for drone in range(number_of_drones):
             if step > final_search_steps[drone]:
@@ -254,7 +257,6 @@ def sensing_and_info_sharing(sol, target_locations=[12], B=0.9, p=0.9, q=0.2):
                     new_obs = (1-p)*prior_obs / ((1-p)*prior_obs + (1-q)*(1-prior_obs))
                 search_map[drone+1, drone_position].append({"timestep":step, "prob":new_obs, "n_obs": max([x["n_obs"] for x in search_map[drone+1, drone_position]])+1})
         # TODO: Info Merging
-<<<<<<< HEAD
         for clique in connected_nodes:
             # print(f"Clique: {clique}")
             clique_async_search_map = async_search_map[clique]
@@ -274,55 +276,6 @@ def sensing_and_info_sharing(sol, target_locations=[12], B=0.9, p=0.9, q=0.2):
     # print("Search map generation completed")
     # for loc in target_locations: 
     #     print(f"target cell {loc} search map: {SM[:,loc]}")
-=======
-        search_map = merge_maps(conn_comp, search_map)
-        # print(f"search map updated at step {step}")
-        # Extract Time Metrics
-        occupancy_status = np.zeros((info.number_of_nodes, info.number_of_cells))
-        for row, col in itertools.product(range(info.number_of_nodes), range(info.number_of_cells)):
-            observations = search_map[row, col]
-            observation_probs = np.array([x["prob"] for x in observations])
-            # print(observation_probs)
-            if len(np.where(observation_probs > B)[0]) >= 1:
-                occupancy_status[row, col] = 1
-        # print(f"occupancy status:\n{occupancy_status}")
-        # Occupancy Status: if cell is believed to be empty, it is 0, otherwise 1 (Mxn) Matrix
-        # Set Time Metrics
-        # Timestep all targets are known
-        if timestep_all_targets_are_known == inf and len(np.unique(np.where(occupancy_status==1)[1])) >= len(target_locations):
-            timestep_all_targets_are_known = step
-        # Timestep BS Knows At Least One Target
-        if timestep_bs_knows_at_least_one_target == inf and len(np.where(occupancy_status[0]==1)[0]) >= 1:
-            timestep_bs_knows_at_least_one_target = step
-        # Timestep BS Knows All Targets
-        if timestep_bs_knows_all_targets == inf and len(np.where(occupancy_status[0]==1)[0]) >= len(target_locations):
-            timestep_bs_knows_all_targets = step
-            relay_cells = np.where(occupancy_status[0]==1)[0]
-        for m in range(number_of_drones):
-            # Timestep At Least One Drone Knows All Targets
-            if timestep_at_least_one_drone_knows_all_targets == inf and len(np.where(occupancy_status[m+1]==1)[0]) >= len(target_locations):
-                timestep_at_least_one_drone_knows_all_targets = step
-                drone_full_detection_timesteps[m] = step
-                # Reroute drone to BS
-                path_to_cell_0 = interpolate_between_cities(x, drone_path_matrix[m, step], 0)
-                new_path = path_to_cell_0 + [-1] * (timesteps - len(path_to_cell_0))
-                x.real_time_path_matrix[m+1] = new_path
-        if timestep_bs_knows_all_targets == inf and len(relay_cells) > 0 :
-            connected_drones_to_bs = get_connected_nodes(adj_mat, 0)
-            unassigned_drones = [i for i in range(number_of_drones) if drone_status[i] == "search"]
-            distances = np.array([info.D[drone, relay_cell] for drone in unassigned_drones for relay_cell in relay_cells])
-            drone_indices, relay_point_indices = linear_sum_assignment(distances)
-            drone_ids = [unassigned_drones[i] for i in drone_indices]
-            for i in drone_ids:
-                drone_status[i] = "relay"
-                path_to_relay = interpolate_between_cities(x, drone_path_matrix[i, step], relay_cells[relay_point_indices[i]])
-                new_path = path_to_relay + path_to_relay[-1] * (timesteps - len(path_to_relay))
-                x.real_time_path_matrix[i+1] = new_path
-            for filled_relay_idx in relay_point_indices:
-                relay_cells.pop(filled_relay_idx)
-            # for drone_idx, in drone_indices:
-            #     drone_status[unassigned_drones[drone_idx]] = "relay"
->>>>>>> 504d702 (Sensing Completed)
 
     detection_time = sum(x.time_elapsed_at_steps[:timestep_all_targets_are_known+1]) if timestep_all_targets_are_known != inf else inf
     time_bs_knows_at_least_one_target = sum(x.time_elapsed_at_steps[:timestep_bs_knows_at_least_one_target+1]) if timestep_bs_knows_at_least_one_target != inf else inf

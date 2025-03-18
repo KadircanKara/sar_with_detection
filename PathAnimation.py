@@ -87,6 +87,7 @@ class PathAnimation:
         """Create and return the animation."""
         anim = FuncAnimation(self.fig, self.update, frames=self.paths[0].shape[1],
                              init_func=self.initialize_figure, blit=True, interval=50)
+        plt.show()
         return anim
 
 
@@ -191,3 +192,11 @@ class PathAnimation:
 # anim = PathAnimation(sample_sol)
 # anim()
 '''
+
+# from PathFileManagement import load_pickle
+# sol = load_pickle("Results/Solutions/MOO_NSGA2_MTSP_TCDT_g_8_a_50_n_8_v_2.5_r_2_nvisits_1-SolutionObjects.pkl")[0]
+# print(sol.drone_dict)
+# new_sol = produce_n_tour_sol(sol, 2)
+# fig, ax = plt.subplots(figsize=(10, 10))
+# new_anim = PathAnimation(new_sol, fig, ax)
+# new_anim()

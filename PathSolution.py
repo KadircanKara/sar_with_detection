@@ -47,9 +47,8 @@ class PathSolution():
             f"Objective Values: totaldistance_{self.total_distance}_longestSubtour_{self.longest_subtour}_percentageConumber_of_nodesectivity_{self.percentage_connectivity}\n" \
             f"Chromosome: pathSequenumber_of_cellse_{self.path}_startPoints_{self.start_points}"
 
-    def __init__(self, path, start_points,  info:PathInfo, calculate_pathplan=False, implement_detection=False, calculate_tbv=False, calculate_connectivity=False, calculate_disconnectivity=False):
+    def __init__(self, path, start_points,  info:PathInfo, calculate_pathplan=False, calculate_tbv=False, calculate_connectivity=False, calculate_disconnectivity=False):
 
-        self.impelement_detection = implement_detection
         self.calculate_tbv = calculate_tbv
         self.calculate_connectivity = calculate_connectivity
         self.calculate_disconnectivity = calculate_disconnectivity
@@ -112,10 +111,6 @@ class PathSolution():
         if calculate_disconnectivity:
             # print("disconnectivity calculations")
             self.do_disconnectivity_calculations()
-
-        if implement_detection:
-            self.update_path_for_detection()
-
 
 
     def get_drone_dict(self):
@@ -379,7 +374,7 @@ class PathSolution():
         else:
             x, y = coords
             return floor(y / self.info.cell_side_length) * self.info.grid_size + floor(x / self.info.cell_side_length)
-
+    
 
 def dfs(connectivity_matrix, node, visited, component):
     visited[node] = True
@@ -472,3 +467,33 @@ def interpolate_between_cities(sol:PathSolution, city_prev, city):
     # print(f"city prev: {city_prev}, city: {city}, mid cities: {interpolated_path}")
     
     return interpolated_path
+
+
+def produce_n_tour_sol(sol:PathSolution, n_tours:int):
+    sol_copy = copy.deepcopy(sol)
+    drone_dict = sol_copy.drone_dict
+    sol_copy.time_slots = 0
+    for i in range(sol_copy.info.number_of_drones):
+        drone_path = drone_dict[i][1:-1]
+        drone_dict[i] = np.hstack((-1, np.tile(drone_path, n_tours), -1))
+        if len(sol_copy.drone_dict[i]) > sol_copy.time_slots : sol_copy.time_slots = len(sol_copy.drone_dict[i])
+
+    print(drone_dict)
+
+    sol_copy.get_pathplan()
+
+    if sol_copy.calculate_tbv and sol_copy.info.n_visits>1:
+        sol_copy.get_visit_times()
+        sol_copy.get_tbv()
+        sol_copy.get_mean_tbv()
+
+
+    if sol_copy.calculate_connectivity:
+        # print("connectivity calculations")
+        sol_copy.do_connectivity_calculations()
+    if sol_copy.calculate_disconnectivity:
+        # print("disconnectivity calculations")
+        sol_copy.do_disconnectivity_calculations()
+
+    return sol_copy
+
