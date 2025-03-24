@@ -64,7 +64,7 @@ class PathInfo(object):
         else:
             comm_cell_range = self.comm_cell_range
 
-        multi_line_scenario = f'''{self.model['Type']}_{self.model['Alg']}_{self.model['Problem']}_{self.model['Exp']}_g_{self.grid_size}_a_{self.cell_side_length}_n_{self.number_of_drones}_
+        multi_line_scenario = f'''{self.model['Type']}_{self.model['Alg']}_{self.model['Exp']}_g_{self.grid_size}_a_{self.cell_side_length}_n_{self.number_of_drones}_
 v_{self.max_drone_speed}_r_{comm_cell_range}_nvisits_{self.n_visits}'''
 
         lines = multi_line_scenario.splitlines()

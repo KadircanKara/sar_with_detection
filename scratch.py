@@ -1,20 +1,121 @@
 from FilePaths import *
+from PathFileManagement import *
 import os
+import copy
+import pandas as pd
+from PathSolution import produce_n_tour_sol
 
-dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
+obj_dict = {
+    "Mission Time":{"attribute":"mission_time", "normalization_factor":1000},
+    "Percentage Connectivity": {"attribute":"percentage_connectivity", "normalization_factor":1},
+    "Max Mean TBV": {"attribute":"max_mean_tbv", "normalization_factor":1},
+    "Max Disconnected Time": {"attribute":"max_disconnected_time", "normalization_factor":1},
+    "Mean Disconnected Time": {"attribute":"mean_disconnected_time", "normalization_factor":1},
+}
+
+n_tours_list = 2,3,4,5
+
+sols_dir = os.listdir(solutions_filepath)
+sols_dir.reverse()
+print(sols_dir)
+
+for filename in sols_dir:
+    scenario = filename.split("-")[0]
+    # Debug: Print the filename being processed
+    print(f"Processing filename: {filename}")
+    
+    # Ensure case-insensitive matching
+    if "nvisits_1" in filename.lower():
+        print(f"Matched 'nvisits_1': {filename}")
+        
+        # Skip files containing "Weighted Sum" (case-insensitive)
+        # if "weighted sum" in filename.lower():
+        #     print(f"Skipping 'Weighted Sum' file: {filename}")
+        #     continue
+        
+        # Proceed with processing
+        objs = copy.deepcopy(pd.read_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl"))
+        if "Weighted Sum" in objs.columns[0]:
+            continue
+        sols = copy.deepcopy(load_pickle(f"{solutions_filepath}{filename}"))
+        runtime = load_pickle(f"{runtimes_filepath}{scenario}-Runtime.pkl")
+        
+        for n_tours in n_tours_list:
+            n_tours_sols = sols.copy()
+            n_tours_F = objs.copy()
+            for row, sol in enumerate(n_tours_sols):
+                sol = produce_n_tour_sol(sol, n_tours)
+                if len(n_tours_F.columns) > 1:
+                    for col in n_tours_F.columns:
+                        obj = obj_dict[col]["attribute"]
+                        n_tours_F[col].iloc[row] = getattr(sol, obj)
+                else:
+                    score = 0
+                    objectives = sol.info.model["F"]
+                    for objective in objectives:
+                        score += (
+                            getattr(sol, obj_dict[objective]["attribute"]) *
+                            obj_dict[objective]["normalization_factor"]
+                        )
+                    n_tours_F.iloc[row] = score
+
+            save_as_pickle(f"{solutions_filepath}{filename.replace('nvisits_1', f'ntours_{n_tours}')}", n_tours_sols)
+            save_as_pickle(f"{objective_values_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-ObjectiveValues.pkl", n_tours_F)
+            save_as_pickle(f"{objective_values_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-ObjectiveValuesAbs.pkl", abs(n_tours_F))
+            save_as_pickle(f"{runtimes_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-Runtime.pkl", runtime)
+
+"""for filename in sols_dir:
+    scenario = filename.split("-")[0]
+    if "nvisits_1" in filename:
+        print(filename)
+        if "Weighted Sum" in filename:
+            continue
+        sols = copy.deepcopy(load_pickle(f"{solutions_filepath}{filename}"))
+        objs = copy.deepcopy(pd.read_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl"))
+        runtime = load_pickle(f"{runtimes_filepath}{scenario}-Runtime.pkl")
+        for n_tours in n_tours_list:
+            # if f"{solutions_filepath}{filename.replace("nvisits_1",f"ntours_{n_tours}")}" in os.listdir(solutions_filepath):
+            #     continue
+            n_tours_sols = sols.copy()
+            n_tours_F = objs.copy()
+            for row,sol in enumerate(n_tours_sols):
+                sol = produce_n_tour_sol(sol, n_tours)
+                if len(n_tours_F.columns) > 1:
+                    for col in n_tours_F.columns:
+                        obj = obj_dict[col]["attribute"]
+                        n_tours_F[col].iloc[row] = getattr(sol, obj)
+                else:
+                    score = 0
+                    objectives = sol.info.model["F"]
+                    for objective in objectives:
+
+                        score += ( getattr(sol, obj_dict[objective]["attribute"]) * obj_dict[objective]["normalization_factor"] )
+                    n_tours_F.iloc[row] = score
+
+            save_as_pickle( f"{solutions_filepath}{filename.replace('nvisits_1',f'ntours_{n_tours}')}", n_tours_sols)
+            save_as_pickle( f"{objective_values_filepath}{scenario.replace('nvisits_1',f'ntours_{n_tours}')}-ObjectiveValues.pkl",  n_tours_F)
+            save_as_pickle( f'{objective_values_filepath}{scenario.replace("nvisits_1",f"ntours_{n_tours}")}-ObjectiveValuesAbs.pkl',  abs(n_tours_F))
+            save_as_pickle( f'{runtimes_filepath}{scenario.replace("nvisits_1",f"ntours_{n_tours}")}-Runtime.pkl',  runtime) # Add runtimes too for consistency
+"""
+
+        
+
+
+
+"""dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
 
 for dir in dirs:
     filenames = os.listdir(dir)
-    # Replace minv with nvisits
     for filename in filenames:
-        split_filename = filename.split("_")
-        # print(split_filename)
-        split_filename = split_filename[:2] + ["MTSP"] + split_filename[2:]
-        new_filename = ""
-        for i in range(len(split_filename)):
-            new_filename += split_filename[i] + "_"
-        new_filename = new_filename[:-1]
-        # print(new_filename)
-        # new_filename = filename.replace("minv", "nvisits")
+        new_filename = filename.replace("MTSP_","")
+        # split_filename = filename.split("_")
+        # # print(split_filename)
+        # split_filename = split_filename[:2] + ["MTSP"] + split_filename[2:]
+        # new_filename = ""
+        # for i in range(len(split_filename)):
+        #     new_filename += split_filename[i] + "_"
+        # new_filename = new_filename[:-1]
+        # # print(new_filename)
+        # # new_filename = filename.replace("minv", "nvisits")
         os.rename(f"{dir}{filename}", f"{dir}{new_filename}")
-        # print(f"Renamed {filename} to {new_filename}")
+        # print(f"Renamed {filename} to {new_filename}")"""

@@ -5,6 +5,7 @@ from PathInfo import *
 from FilePaths import *
 from PathFileManagement import load_pickle
 from Connectivity import connected_components, PathSolution, connected_nodes_at_step # get_connected_nodes
+from PathOptimizationModel import *
 # from Distance import interpolate_between_cities
 from array_operations import create_array_of_lists
 import itertools
@@ -321,32 +322,18 @@ def sensing_and_info_sharing(sol, merging_strategy="ondrone", target_locations=[
         #         break
         # detection_time_gain = (original_detection_time - detection_time) * 100 / original_detection_time if detection_time != np.inf else np.inf
         # inform_time_gain = (original_inform_time - inform_time) * 100 / original_inform_time if inform_time != np.inf else np.inf
-    return {"detection time": detection_time, "inform time": inform_time, "Time at least one drone knows all targets":time_at_least_one_drone_knows_all_targets}
+    return {"detection time": detection_time, "inform time": inform_time, "time at least one drone knows all targets":time_at_least_one_drone_knows_all_targets}
 
 
-def run_tests(test="test", merging_strategy="ondrone", n_runs=1000, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12, 16], n_targets_list=[3, 4, 5]):
+def run_tests(test="test", merging_strategy="ondrone", n_runs=50, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12, 16], n_targets_list=[3, 4, 5]):
 
-    if test == "TC_GA":
-        problem = "SOO"
-        alg = "GA"
-        obj = "TC"
-    elif test == "TC_NSGA2":
-        problem = "MOO"
-        alg = "NSGA2"
-        obj = "TC"
-    elif test == "T_GA":
-        problem = "SOO"
-        alg = "GA"
-        obj = "T"
-    elif test == "TCDT_NSGA2":
-        problem = "MOO" 
-        alg = "NSGA2"
-        obj = "TCDT"
-    elif test == "TCDT_GA":
-        problem = "SOO" 
-        alg = "GA"
-        obj = "TCDT"
-
+    obj_dict = {
+        "Mission Time":{"attribute":"mission_time", "normalization_factor":1000},
+        "Percentage Connectivity": {"attribute":"percentage_connectivity", "normalization_factor":1},
+        "Max Mean TBV": {"attribute":"max_mean_tbv", "normalization_factor":1},
+        "Max Disconnected Time": {"attribute":"max_disconnected_time", "normalization_factor":1},
+        "Mean Disconnected Time": {"attribute":"mean_disconnected_time", "normalization_factor":1},
+    }
 
     if test == "test":
         scenario = f"MOO_NSGA2_MTSP_TCDT_g_8_a_50_n_{16}_v_2.5_r_{'sqrt(8)'}_nvisits_{3}"
@@ -357,34 +344,23 @@ def run_tests(test="test", merging_strategy="ondrone", n_runs=1000, p0=0.5, B_li
         best_sol_time_metrics = sensing_and_info_sharing(best_sol, merging_strategy="gcs", target_locations=[8,12], B=0.9, p=0.9, q=0.1)
         print(best_sol_time_metrics)
     else:
-        # Put different B, p values on the same plots
-        for B in B_list:
-            for p in p_list:
-                fig, ax = plt.subplots()
-                q = 1-p
-                m = ceil( log10((p0*(1-B))/(B*(1-p0))) / log10(q/p) )
-                for comm_range in comm_range_list:
-                    for n_targets in n_targets_list:
-                        target_locations = np.random.choice(range(1, 64), n_targets, replace=False)
-                        plot_details = f"T: {n_targets}, {target_locations},  $r_c$: {comm_range}" + "$n_{visits}$: " + str(m)
-                        y_detection_time_list, y_inform_time_list, y_time_at_least_one_drone_knows_all_targets_list, y_success_rate = [], [], [], []
-                        for i,number_of_drones in enumerate(number_of_drones_list):
-                            sol_set = copy.deepcopy(load_pickle(f"{solutions_filepath}{problem}_{alg}_MTSP_{obj}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-SolutionObjects.pkl")).flatten().tolist()
-                            F = copy.deepcopy(pd.read_pickle(f"{objective_values_filepath}{alg}_MTSP_{obj}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-ObjectiveValues.pkl"))
-                            cols = F.columns()
-                            for col in cols:
-                                sol = sol_set[F[col].idxmin()]
-                                time_metrics = sensing_and_info_sharing(sol=sol, merging_strategy=merging_strategy, target_locations=target_locations, B=B, p=p, q=1-p)
-
-                    
+        model_dict = {
+            "MTSP": T_SOO_GA,
+            "TC_MOO": TC_MOO_NSGA2,
+            "TC_SOO": TC_SOO_GA,
+            "TCDT_MOO": TCDT_MOO_NSGA2,
+            "TCDT_SOO": TCDT_SOO_GA
+        }
 
 
+        tcdt_soo_details = f"{TCDT_SOO_GA["Type"]}_{TCDT_SOO_GA["Alg"]}_{TCDT_SOO_GA["Exp"]}"
+        tcdt_moo_details = f"{TCDT_MOO_NSGA2["Type"]}_{TCDT_MOO_NSGA2["Alg"]}_{TCDT_MOO_NSGA2["Exp"]}"
+        mtsp_details = f"{T_SOO_GA["Type"]}_{T_SOO_GA["Alg"]}_{T_SOO_GA["Exp"]}"
+        tc_soo_details = f"{TC_SOO_GA["Type"]}_{TC_SOO_GA["Alg"]}_{TC_SOO_GA["Exp"]}"
+        tc_moo_details = f"{TC_MOO_NSGA2["Type"]}_{TC_MOO_NSGA2["Alg"]}_{TC_MOO_NSGA2["Exp"]}"
 
 
-
-
-
-
+        # Put all the models in one plot. New figure for every B, p, range, n_targets combinations.
         for B in B_list:
             for p in p_list:
                 q = 1-p
@@ -392,124 +368,75 @@ def run_tests(test="test", merging_strategy="ondrone", n_runs=1000, p0=0.5, B_li
                 for comm_range in comm_range_list:
                     for n_targets in n_targets_list:
                         target_locations = np.random.choice(range(1, 64), n_targets, replace=False)
-                        y_detection_time_list, y_inform_time_list, y_time_at_least_one_drone_knows_all_targetslist, y_success_rate = [], [], [], []
-                        for i,number_of_drones in enumerate(number_of_drones_list):
-                            plot_details = f"B: {np.round(B,2)}, p: {np.round(p,2)},  q: {np.round(q,2)}, T: {n_targets}, {target_locations},  $r_c$: {comm_range}" + "$n_{visits}$: " + str(m)
-                            sol_set = copy.deepcopy(load_pickle(f"{solutions_filepath}{problem}_{alg}_MTSP_{obj}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-SolutionObjects.pkl")).flatten().tolist()
-                            F = copy.deepcopy(pd.read_pickle(f"{objective_values_filepath}{alg}_MTSP_{obj}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-ObjectiveValues.pkl"))
-                            cols = F.columns()
-                            best_sol_dict = {col:sol_set[F[col].idxmin()] for col in cols}
-                            best_sol_time_metric_dict = {col:sensing_and_info_sharing(best_sol_dict[col], merging_strategy="ondrone", target_locations=target_locations, B=B, p=p, q=1-p) for col in cols}
-                            for run_no in range(n_runs):
-                                print(f"Run {run_no+1}")
+                        plot_title = f"B: {B}, p: {p}, q: {q}, T: {target_locations},  $r_c$: {comm_range}" + "$n_{visits}$: " + str(m)
+                        plt.suptitle(plot_title)
+                        fig, ax = plt.subplots()
+                        ax.grid()
+                        plt.xlabel("Number of Drones")
+                        plt.xticks(number_of_drones_list)
+                        y_detection_time = np.array([np.zeros(number_of_drones_list)]*10) # np.zeros(number_of_drones_list)
+                        y_inform_time = y_detection_time.copy()
+                        y_mission_time = y_inform_time.copy()
+                        y_successful_runs = y_mission_time.copy()
+                        for run in range(n_runs):
+                            print(f"Run #: {run}")
+                            for i,number_of_drones in enumerate(number_of_drones_list):
+                                # mtsp_sols = load_pickle(f"{solutions_filepath}{mtsp_details}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-SolutionObjects.pkl")
+                                tc_moo_sols = load_pickle(f"{solutions_filepath}{tc_moo_details}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-SolutionObjects.pkl")
+                                tcdt_moo_sols = load_pickle(f"{solutions_filepath}{tcdt_moo_details}_g_8_a_50_n_{number_of_drones}_v_2.5_r_{comm_range}_nvisits_{m}-SolutionObjects.pkl")
+                                model_solution_objects = [tc_moo_sols, tcdt_moo_sols]
+                                for sol_set in model_solution_objects:
+                                    print("sol_set")
+                                    scenario = str(sol_set[0].info)
+                                    F = pd.read_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl")
+                                    for j,objective in enumerate(list(F.columns)):
+                                        F_values = F[objective]
+                                        opt_idx = F_values.idxmin()
+                                        opt_sol = sol_set[opt_idx]
+                                        opt_sol_time_metrics = sensing_and_info_sharing(sol=opt_sol, merging_strategy=merging_strategy, target_locations=target_locations, B=B, p=p, q=1-p)
+                                        y_detection_time[j][i] += opt_sol_time_metrics["detection time"] if opt_sol_time_metrics["detection time"] != np.inf else y_detection_time[j][i]
+                                        y_inform_time[j][i] += opt_sol_time_metrics["inform time"] if opt_sol_time_metrics["inform time"] != np.inf else y_inform_time[j][i]
+                                        y_mission_time[j][i] += opt_sol_time_metrics["time at least one drone knows all targets"] if opt_sol_time_metrics["time at least one drone knows all targets"] != np.inf else y_mission_time[j][i]
+                                        y_successful_runs[j][i] += 1 if opt_sol_time_metrics["inform time"] != np.inf else y_successful_runs[j][i]
 
-                                for col in F.columns():
-                                    y_detection_time_dict[col] = np.zeros(len(number_of_drones_list))
-                                        
-                                    best_sol_dict[col] = sol_set[F[col].idxmin()] # Best connectivity solution of specificed scenario
-                                    best_sol_time_metric_dict[col] = sensing_and_info_sharing(best_sol_dict[col], merging_strategy="ondrone", target_locations=target_locations, B=B, p=p, q=1-p)
-                                    y_detection_time_dict[col][i] += best_sol_time_metrics["detection time"] if best_sol_time_metrics["detection time"] != inf else 0
-                                    y_inform_time_list[i] += best_sol_time_metrics["inform time"] if best_sol_time_metrics["inform time"] != inf else 0
-                                    y_successful_runs_list[i] = y_successful_runs_list[i] + 1 if best_sol_time_metrics["inform time"] != inf else y_successful_runs_list[i]
-
-                                            # best_sol_time_metrics = sensing_and_info_sharing(best_sol, merging_strategy="ondrone", target_locations=target_locations, B=B, p=p, q=1-p)
-
-                                # best_sol_time_metrics = sensing_and_info_sharing(best_sol, merging_strategy="ondrone", target_locations=[8,12], B=B, p=p, q=1-p)
-                                    # print(best_sol_time_metrics)
-                                    # y_time_at_least_one_drone_knows_all_targets_list[i] += best_sol_time_metrics["Time BS knows at least one target"] if best_sol_time_metrics["Time BS knows at least one target"] != inf else 0
-                                    if best_sol_time_metrics["inform time"] != inf:
-                                        y_successful_runs[i] += 1
-                            y_detection_time_list = [x/n_runs for x in y_detection_time_list]
-                            y_inform_time_list = [x/n_runs for x in y_inform_time_list]
-                            y_time_at_least_one_drone_knows_all_targets_list = [x/n_runs for x in y_time_at_least_one_drone_knows_all_targets_list]
-                            y_success_rate = [x/n_runs for x in y_successful_runs]
-
-
-                            # Plot Detection Time
-                            fig,ax = plt.subplots(figsize=(8, 6))
-                            fig.suptitle(f"{plot_details}")
-                            plt.plot(number_of_drones_list, y_detection_time_list, label="Detection Time")
-                            plt.title("Detection Time Gain")
-                            plt.xlabel("Number of Drones")
-                            plt.ylabel("Detection Time (s)")
-                            plt.xticks(number_of_drones_list)
-                            plt.grid()
+                        for i in range(10):
+                            if y_detection_time[i]==np.zeros(number_of_drones_list).any():
+                                break
+                            y_detection_time[i] /= n_runs
+                            plt.plot(number_of_drones_list, y_detection_time[i], label="Mean Detection Time")
+                            plt.title("Mean Detection Time")
+                            plt.ylabel("Mean Detection Time (s)")
                             plt.legend()
-                            plt.savefig(f"Figures/Sensing/{plot_details}_detection_time.png")
+                            # plt.savefig(f"Figures/Sensing/{plot_title}_mean_detection_time.png")
                             plt.show()
                             plt.close()
 
-                            # Plot Inform Time
-                            fig,ax = plt.subplots(figsize=(8, 6))
-                            fig.suptitle(f"{plot_details}")
-                            plt.plot(number_of_drones_list, y_inform_time_list, label="Inform Time")
-                            plt.title("Inform Time (s)")
-                            plt.xlabel("Number of Drones")
-                            plt.ylabel("Inform Time (s)")
-                            plt.xticks(number_of_drones_list)
-                            plt.grid()
+                            y_inform_time[i] /= n_runs
+                            plt.plot(number_of_drones_list, y_inform_time[i], label="Inform Time")
+                            plt.title("Mean Inform Time")
+                            plt.ylabel("Mean Inform Time (s)")
                             plt.legend()
-                            plt.savefig(f"Figures/Sensing/{plot_details}_inform_time.png")
+                            # plt.savefig(f"Figures/Sensing/{plot_title}_mean_inform_time.png")
                             plt.show()
                             plt.close()
 
-                            # Plot Time at least one drone knows all targets
-                            fig,ax = plt.subplots(figsize=(8, 6))
-                            fig.suptitle(f"{plot_details}")
-                            plt.plot(number_of_drones_list, y_time_at_least_one_drone_knows_all_targets_list, label="Time at least one drone knows all targets")
-                            plt.title("Time at least one drone knows all targets (s)")
-                            plt.xlabel("Number of Drones")
-                            plt.ylabel("Time at least one drone knows all targets (s)")
-                            plt.xticks(number_of_drones_list)
-                            plt.grid()
+                            y_mission_time[i] /= n_runs
+                            plt.plot(number_of_drones_list, y_mission_time[i], label="Time at least one drone knows all targets")
+                            plt.title("Mean Mission Time")
+                            plt.ylabel("Mean Mission Time (s)")
                             plt.legend()
-                            plt.savefig(f"Figures/Sensing/{plot_details}_time_at_least_one_drone_knows_all_targets.png")
+                            # plt.savefig(f"Figures/Sensing/{plot_title}_mean_mission_time.png")
                             plt.show()
                             plt.close()
 
-                            # Plot Success Rate
-                            fig,ax = plt.subplots(figsize=(8, 6))
-                            fig.suptitle(f"{plot_details}")
-                            plt.plot([4, 8, 12, 16], y_success_rate, label="Success Rate")
-                            plt.title("Success Rate")
-                            plt.xlabel("Number of Drones")
-                            plt.ylabel("Success Rate")
-                            plt.xticks(number_of_drones_list)
-                            plt.grid()
+                            y_successful_runs[i] = y_successful_runs[i]*100 / n_runs
+                            plt.plot(number_of_drones_list, y_successful_runs[i], label="Mission Success Rate")
+                            plt.title("Mission Success Rate")
+                            plt.ylabel("MeMission Success Rate (%)")
                             plt.legend()
-                            plt.savefig(f"Figures/Sensing/{plot_details}_success_rate.png")
+                            # plt.savefig(f"Figures/Sensing/{plot_title}_mission_success_rate.png")
+                            plt.show()
+                            plt.close()
 
-
-
-                    # ax[0].plot([4, 8, 12, 16], y_detection_time_gain_list, label="Detection Time Gain")
-                    # ax[0].set_title("Detection Time Gain")
-                    # ax[0].set_xlabel("Number of Drones")
-                    # ax[0].set_ylabel("Detection Time Gain (%)")
-                    # ax[0].set_xticks([4, 8, 12, 16])
-                    # ax[0].grid()
-                    # ax[0].legend()
-                    # ax[1].plot([4, 8, 12, 16], y_inform_time_gain_list, label="Inform Time Gain")
-                    # ax[1].set_title("Inform Time Gain")
-                    # ax[1].set_xlabel("Number of Drones")
-                    # ax[1].set_ylabel("Inform Time Gain (%)")
-                    # ax[1].set_xticks([4, 8, 12, 16])
-                    # ax[1].grid()
-                    # ax[1].legend()
-                    # ax[2].plot([4, 8, 12, 16], y_time_at_least_one_drone_knows_all_targets_list, label="Time BS knows at least one target")
-                    # ax[2].set_title("Time BS knows at least one target")
-                    # ax[2].set_xlabel("Number of Drones")
-                    # ax[2].set_ylabel("Time BS knows at least one target")
-                    # ax[2].set_xticks([4, 8, 12, 16])
-                    # ax[2].grid()
-                    # ax[2].legend()
-                    # ax[3].plot([4, 8, 12, 16], y_success_rate, label="Success Rate")
-                    # ax[3].set_title("Success Rate")
-                    # ax[3].set_xlabel("Number of Drones")
-                    # ax[3].set_ylabel("Success Rate")
-                    # ax[3].set_xticks([4, 8, 12, 16])
-                    # ax[3].grid()
-                    # ax[3].legend()
-                    # plt.show()
-                        
 
 run_tests("multi")

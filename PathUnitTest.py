@@ -103,7 +103,14 @@ class PathUnitTest(object):
         if res.X is not None:
             # print(res.X)
             X = res.X.flatten() # FLATTEN NEW !
-            F = pd.DataFrame(res.F, columns=model['F'])
+            if len(model["F"]) > 1 and model["Type"]=="SOO":
+                col_name = ""
+                for objective_name in model["F"]:
+                    col_name += f"{objective_name} &"
+                col_name = col_name[:-1] + "Weighted Sum"
+                F = pd.DataFrame(res.F, columns=col_name)
+            else:
+                F = pd.DataFrame(res.F, columns=model['F'])
             F_abs= abs(F)
             R = t_elapsed_seconds
             # If certain attributes are missing from the solution objects, add them here

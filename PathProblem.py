@@ -91,8 +91,9 @@ class PathProblem(ElementwiseProblem):
         # model_functions = get_model_function_values(sol)
         f,g,h=[],[],[]
 
-        if len(model["F"])==1 and 'Weighted Sum' in model["F"][0]:
-            objectives = model["F"][0].split("-")[:-1]
+        if len(model["F"])>1 and model["Type"]=="SOO":
+            objectives = model['F']
+            # objectives = model["F"][0].split("-")[:-1]
             score = 0
             for i in range(len(objectives)):
                 obj_name = objectives[i]

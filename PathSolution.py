@@ -478,7 +478,7 @@ def produce_n_tour_sol(sol:PathSolution, n_tours:int):
         drone_dict[i] = np.hstack((-1, np.tile(drone_path, n_tours), -1))
         if len(sol_copy.drone_dict[i]) > sol_copy.time_slots : sol_copy.time_slots = len(sol_copy.drone_dict[i])
 
-    print(drone_dict)
+    # print(drone_dict)
 
     sol_copy.get_pathplan()
 
