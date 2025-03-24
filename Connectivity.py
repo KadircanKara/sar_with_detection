@@ -275,3 +275,22 @@ def connected_nodes(sol:PathSolution, start_node):
     return num_connected_drones
 
     # return connected_count - 1  # Subtract 1 because start node is included in count
+
+def connected_nodes_at_step(adj, start_node):
+    num_nodes = adj.shape[0]
+    visited = [False] * num_nodes
+    queue = deque([start_node])
+    connected_count = 0
+
+    visited[start_node] = True  # Mark start node as visited
+
+    while queue:
+        node = queue.popleft()
+        connected_count += 1
+
+        for j in range(num_nodes):
+            if adj[node][j] != 0 and not visited[j]:
+                queue.append(j)
+                visited[j] = True  # Mark the connected node as visited
+
+    return connected_count - 1  # Subtract 1 because start node is included in count

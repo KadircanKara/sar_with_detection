@@ -496,4 +496,3 @@ def produce_n_tour_sol(sol:PathSolution, n_tours:int):
         sol_copy.do_disconnectivity_calculations()
 
     return sol_copy
-

@@ -31,7 +31,7 @@ scenario = {
 
 number_of_drones_values = [4]
 comm_cell_range_values = [2,2*sqrt(2)]
-n_visits_values = [4,5]
+n_visits_values = [3]
 
 
 scenarios = []

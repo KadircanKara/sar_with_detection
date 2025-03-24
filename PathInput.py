@@ -11,10 +11,10 @@ from pymoo.core.duplicate import NoDuplicateElimination
 # CHANGE ALGORITHM INPUTS FROM HERE !!!
 
 # MODEL
-model = MTSP_TCDT_MOO_NSGA2
+model = MTSP_TC_SOO_GA
 
 # ALG
-pop_size = 400
+pop_size = 300
 n_gen = 1000
 
 """
