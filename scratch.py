@@ -5,7 +5,7 @@ import copy
 import pandas as pd
 from PathSolution import produce_n_tour_sol
 
-obj_dict = {
+"""obj_dict = {
     "Mission Time":{"attribute":"mission_time", "normalization_factor":1000},
     "Percentage Connectivity": {"attribute":"percentage_connectivity", "normalization_factor":1},
     "Max Mean TBV": {"attribute":"max_mean_tbv", "normalization_factor":1},
@@ -62,7 +62,7 @@ for filename in sols_dir:
             save_as_pickle(f"{solutions_filepath}{filename.replace('nvisits_1', f'ntours_{n_tours}')}", n_tours_sols)
             save_as_pickle(f"{objective_values_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-ObjectiveValues.pkl", n_tours_F)
             save_as_pickle(f"{objective_values_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-ObjectiveValuesAbs.pkl", abs(n_tours_F))
-            save_as_pickle(f"{runtimes_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-Runtime.pkl", runtime)
+            save_as_pickle(f"{runtimes_filepath}{scenario.replace('nvisits_1', f'ntours_{n_tours}')}-Runtime.pkl", runtime)"""
 
 """for filename in sols_dir:
     scenario = filename.split("-")[0]
@@ -102,12 +102,16 @@ for filename in sols_dir:
 
 
 
-"""dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
+dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
 
 for dir in dirs:
     filenames = os.listdir(dir)
     for filename in filenames:
-        new_filename = filename.replace("MTSP_","")
+        exp = filename.split("_")[2]
+        if exp == "T":
+            new_filename = filename.replace("_T_","_MTSP_")
+            print(f"Original Scenario: {filename.split("-")[0]}\nNew Scenario: {new_filename.split("-")[0]}")
+            os.rename(f"{dir}{filename}", f"{dir}{new_filename}")
         # split_filename = filename.split("_")
         # # print(split_filename)
         # split_filename = split_filename[:2] + ["MTSP"] + split_filename[2:]
@@ -117,5 +121,5 @@ for dir in dirs:
         # new_filename = new_filename[:-1]
         # # print(new_filename)
         # # new_filename = filename.replace("minv", "nvisits")
-        os.rename(f"{dir}{filename}", f"{dir}{new_filename}")
+        # os.rename(f"{dir}{filename}", f"{dir}{new_filename}")
         # print(f"Renamed {filename} to {new_filename}")"""

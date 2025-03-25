@@ -1,7 +1,7 @@
 # T MODELS
 T_SOO_GA = {
     'Type': 'SOO',
-    'Exp': 'T',
+    'Exp': 'MTSP',
     'Alg': "GA",
     'F': ['Mission Time'],
     'G': ['Max Mission Time', 'Min Percentage Connectivity'],
@@ -11,7 +11,7 @@ T_SOO_GA = {
 # C MODELS
 C_SOO_GA = {
     'Type': 'SOO',
-    'Exp': 'C',
+    'Exp': 'CONN',
     'Alg': "GA",
     'F': ['Percentage Connectivity'],
     'G': ['Min Percentage Connectivity'],
