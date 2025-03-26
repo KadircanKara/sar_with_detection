@@ -2,9 +2,49 @@ from FilePaths import *
 from PathFileManagement import *
 import os
 import copy
-import pandas as pd
+# import pandas as pd
+import numpy as np
 from PathSolution import produce_n_tour_sol
+from PathOptimizationModel import *
+# import joblib
 
+# data = joblib.load("Results/Objectives/SOO_GA_MTSP_g_8_a_50_n_4_v_2.5_r_sqrt(8)_nvisits_2-ObjectiveValues.pkl")
+
+# with open("Results/Objectives/SOO_GA_MTSP_g_8_a_50_n_4_v_2.5_r_sqrt(8)_nvisits_2-ObjectiveValues.pkl", "rb") as file:
+#     data = pickle.load(file)
+#     print(data)
+
+
+test = np.load("Results/Objectives/SOO_GA_MTSP_g_8_a_50_n_4_v_2.5_r_sqrt(8)_nvisits_2-ObjectiveValues.pkl", allow_pickle=False)
+# test = pd.read_pickle("Results/Objectives/SOO_GA_MTSP_g_8_a_50_n_4_v_2.5_r_sqrt(8)_nvisits_2-ObjectiveValues.pkl")
+
+"""for filename in os.listdir(solutions_filepath):
+    if "WS" in filename:
+        print("Scenario:", filename.split("-")[0])
+        filepath = f"{solutions_filepath}{filename}"
+        X = load_pickle(filepath)
+        for sol in X:
+            sol.info.model = TCDT_WS
+        save_as_pickle(filepath, X)
+        # print(load_pickle(filepath)[0].info.model["F"])
+"""        
+
+"""for filename in os.listdir(objective_values_filepath):
+    if "WS" in filename:
+        print("Scenario:", filename.split("-")[0])
+        filepath = f"{objective_values_filepath}{filename}"
+        F = pd.read_pickle(filepath)
+        assert (len(list(F.columns))==1), "Length greater than 1 !"
+        old_column = list(F.columns)[0]
+        print("Old Column:", old_column)
+        new_column = old_column.replace("-", " & ").replace(" & Weighted Sum", " Weighted Sum")
+        print("New Column:", new_column)
+        F.columns = [new_column]
+        F.to_pickle(filepath)
+        # print("-->", list(F.columns))
+        print("Post-Update Columns:", list(pd.read_pickle(filepath).columns))
+        print("-------------------------------------------------------------------------------------------------------------------------------------------------------------")
+"""
 """obj_dict = {
     "Mission Time":{"attribute":"mission_time", "normalization_factor":1000},
     "Percentage Connectivity": {"attribute":"percentage_connectivity", "normalization_factor":1},
@@ -98,19 +138,23 @@ for filename in sols_dir:
             save_as_pickle( f'{runtimes_filepath}{scenario.replace("nvisits_1",f"ntours_{n_tours}")}-Runtime.pkl',  runtime) # Add runtimes too for consistency
 """
 
+
+
         
 
 
 
-dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
+"""dirs = [solutions_filepath, objective_values_filepath, runtimes_filepath]
 
 for dir in dirs:
     filenames = os.listdir(dir)
     for filename in filenames:
+        split_filename = filename.split("_")
+        type_ = split_filename[0]
         exp = filename.split("_")[2]
-        if exp == "T":
-            new_filename = filename.replace("_T_","_MTSP_")
-            print(f"Original Scenario: {filename.split("-")[0]}\nNew Scenario: {new_filename.split("-")[0]}")
+        if type_ == "SOO" and exp == "TCDT":
+            new_filename = filename.replace("SOO","WS")
+            # print(f"Original Scenario: {filename.split('-')[0]}\nNew Scenario: {new_filename.split('-')[0]}")
             os.rename(f"{dir}{filename}", f"{dir}{new_filename}")
         # split_filename = filename.split("_")
         # # print(split_filename)

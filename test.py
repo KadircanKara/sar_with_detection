@@ -1,15 +1,26 @@
-from math import ceil, log10
+import numpy as np
+import pandas as pd
+print(np.__version__)
+print(pd.__version__)
+
+# test = np.array([[1,2,3],[4,5,6]])
+# print(test)
+# import matplotlib
+
+# import matplotlib
+
+"""from math import ceil, log10
 import numpy as np
 import pandas as pd
 # from Results import save_best_solutions
 # from PathInfo import *
 from FilePaths import *
 # from PathFileManagement import load_pickle
-# from Connectivity import connected_components, PathSolution
+# from Connectivity import connected_components, PathSolution"""
 
-array = np.array([ [1,2,3], [4,5,6], [7,8,9] ])
+"""array = np.array([ [1,2,3], [4,5,6], [7,8,9] ])
 flat_array = array.flatten()
-print(flat_array)
+print(flat_array)"""
 
 # rows=8
 # cols = 10

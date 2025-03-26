@@ -8,13 +8,13 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from math import log10
 
-model_name_model_object_dict = {
-    "MTSP": T_SOO_GA,
-    "TC_MOO": TC_MOO_NSGA2,
-    "TC_SOO": TC_SOO_GA,
-    "TCDT_MOO": TCDT_MOO_NSGA2,
-    "TCDT_SOO": TCDT_SOO_GA
-}
+# model_name_model_object_dict = {
+#     "MTSP": MTSP,
+#     "TC_MOO": TC_MOO_NSGA2,
+#     "TC_SOO": TC_SOO_GA,
+#     "TCDT_MOO": TCDT_MOO_NSGA2,
+#     "TCDT_SOO": TCDT_SOO_GA
+# }
 
 def initialize_figure(_title=None, _suptitle=None, xlabel=None, ylabel=None, xticks=None, yticks=None, grid_on=True):
     fig,ax = plt.subplots()
@@ -29,7 +29,7 @@ def initialize_figure(_title=None, _suptitle=None, xlabel=None, ylabel=None, xti
     return fig, ax
 
 
-def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="ondrone", n_runs=50, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12, 16], n_targets_list=[3, 4, 5], show=True):
+def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="ondrone", n_runs=50, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12, 16], n_targets_list=[3, 4, 5], show=True, save=False):
 
     # Plot for every r, B, p, n_tar combination.
     # Put all 'best objective paths' on the same plots.
@@ -54,14 +54,14 @@ def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="o
                     #Mission Time - Percentage Connectivity - Weighted Sum
                     for model in models:
                         info.model = model
+                        if model["Type"]=="WS": # WS
+                            label = f"{model['Exp']}-WS Best Path"
+                        elif model["Type"]=="SOO":
+                            label = f"{model['Exp']} Best Path"
                         for objective_name in model["F"]:
-                            if len(model["F"]) > 1 and model["Type"]=="SOO": # WS
-                                label = f"{model['Exp']}-WS Best Path"
-                            elif len(model["F"]) == 1:
-                                label = f"{model["Exp"]} Best Path"
-                            else:
+                            if model["Type"]=="MOO":
                                 label = f"{model['Exp']}-{model['Type']} Best {objective_name} Path"
-                            y_detection_time =np.zeros(len(number_of_drones_list))
+                            y_detection_time = np.zeros(len(number_of_drones_list))
                             y_inform_time = y_detection_time.copy()
                             y_time_at_least_one_drone_knows_all_targets = y_detection_time.copy()
                             y_successful_runs = y_detection_time.copy()
@@ -69,7 +69,9 @@ def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="o
                                 info.number_of_drones = number_of_drones
                                 scenario = str(info)
                                 X = load_pickle(f"{solutions_filepath}{scenario}-SolutionObjects.pkl")
-                                F = pd.read_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl")
+                                print(scenario)
+                                F = load_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl")
+                                # F = np.load(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl", allow_pickle=True) if model["Type"]=="SOO" else load_pickle(f"{objective_values_filepath}{scenario}-ObjectiveValues.pkl")
                                 opt_sol = X[F[objective_name].idxmin()] if not len(model["F"]) > 1 and model["Type"]=="SOO" else X[0]
                                 for run in range(n_runs):
                                     print(f"Run # {run}")
@@ -90,4 +92,8 @@ def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="o
                     if show:
                         plt.show()
 
-plot_time_metrics(models=[T_SOO_GA, TCDT_SOO_GA], merging_strategy="ondrone", n_runs=2, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12], n_targets_list=[3, 4, 5], show=True)
+                    if save:
+                        for fig in figs:
+                            fig.savefig(f"Figures/Sensing/{parameters}_{fig.suptitle().get_text()}.png")
+
+plot_time_metrics(models=[MTSP, TCDT_WS], merging_strategy="ondrone", n_runs=2, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12], n_targets_list=[3, 4, 5], show=True)
