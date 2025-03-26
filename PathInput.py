@@ -11,7 +11,7 @@ from pymoo.core.duplicate import NoDuplicateElimination
 # CHANGE ALGORITHM INPUTS FROM HERE !!!
 
 # MODEL
-model = MTSP
+model = TCT_MOO_NSGA2
 
 # ALG
 pop_size = 300

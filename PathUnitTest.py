@@ -34,6 +34,9 @@ if os.path.isfile("GoogleDriveUpload.py"):
     from GoogleDriveUpload import authenticate, upload_file, PARENT_FOLDER_ID_DICT
 
 
+max_n_tour = 10
+
+
 class PathUnitTest(object):
 
     def __init__(self, scenario) -> None:
@@ -51,7 +54,6 @@ class PathUnitTest(object):
             res, F, F_abs, X, R = self.run_optimization(info)
             if X is not None:
                 if save_results:
-                    # save_as_pickle(f"{res_filepath}{str(info)}-Res.pkl", X)
                     # Save PathSolutions
                     save_as_pickle(f"{solutions_filepath}{scenario}-SolutionObjects.pkl", X)
                     upload_file(f"{solutions_filepath}{scenario}-SolutionObjects.pkl", PARENT_FOLDER_ID_DICT["Solutions"]) if copy_to_drive else None
@@ -65,7 +67,33 @@ class PathUnitTest(object):
                     upload_file(f"{runtimes_filepath}{scenario}-Runtime.pkl", PARENT_FOLDER_ID_DICT["Runtimes"]) if copy_to_drive else None
                     # save_paths_and_anims_from_scenario(str(info))
                     # save_best_solutions(scenario, copy_to_drive)
-                
+                    # Save n_tour files if necessary and if nvisits=1
+                    if info.n_visits==1:
+                        for n_tour in np.arange(2,max_n_tour+1):
+                            n_tour_scenario = scenario.replace("nvisits_1", f"ntours_{n_tour}")
+                            # Solution Objects
+                            # if f"{solutions_filepath}{n_tour_scenario}-SolutionObjects.pkl" not in os.listdir(solutions_filepath):
+                            X_ntour = X.copy()
+                            for i in range(len(X_ntour)):
+                                X_ntour[i] = produce_n_tour_sol(X_ntour[i], n_tour)
+                            save_as_pickle(f"{solutions_filepath}{n_tour_scenario}-SolutionObjects.pkl", X_ntour)
+                            upload_file(f"{solutions_filepath}{n_tour_scenario}-SolutionObjects.pkl", PARENT_FOLDER_ID_DICT["Solutions"]) if copy_to_drive else None
+                            # Objective Values
+                            # if f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValues.pkl" not in os.listdir(objective_values_filepath):
+                            # X_ntour = load_pickle(f"{solutions_filepath}{n_tour_scenario}-SolutionObjects.pkl")
+                            F_values = [calculate_ws_score_from_ws_objective(x) for x in X_ntour]
+                            F_columns = info.model["F"]
+                            F_ntour = pd.DataFrame(data=F_values, columns=F_columns)
+                            save_as_pickle(f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValues.pkl", F_ntour)
+                            upload_file(f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValues.pkl", PARENT_FOLDER_ID_DICT["Objectives"]) if copy_to_drive else None
+                            # if f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValuesAbs.pkl" not in os.listdir(objective_values_filepath):
+                            F_abs_ntour = abs(pd.read_pickle(f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValues.pkl"))
+                            save_as_pickle(f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValuesAbs.pkl", F_abs_ntour)
+                            upload_file(f"{objective_values_filepath}{n_tour_scenario}-ObjectiveValuesAbs.pkl", PARENT_FOLDER_ID_DICT["Objectives"]) if copy_to_drive else None
+                            # Runtimes
+                            # if f"{runtimes_filepath}{n_tour_scenario}-Runtime.pkl" not in os.listdir(runtimes_filepath):
+                            save_as_pickle(f"{runtimes_filepath}{n_tour_scenario}-Runtime.pkl", R) # Runtime does not change
+
                 if animation:
                     animate_extreme_point_paths(info)
 

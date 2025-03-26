@@ -1,24 +1,11 @@
-def get_objectives_from_weighted_sum_model(model):
-    assert (len(model["F"]) == 1 and "Weighted Sum" in model["F"][0]), "Model is not a Weighted Sum Model!"
-    objectives = model["F"][0].split("&")
-    objectives[0] = objectives[0][:-1] # Delete the final whitespace
-    objectives[-1] = objectives[-1].replace(" Weighted Sum", "")[1:] # Delete "Weighted Sum" part on the last objective, then delete the whitespace at the first index
-    for i in range(1, len(objectives)-1): # Iterate over all the middle idx objectives
-        objectives[i] = objectives[i][1:-1] # Delete the first and last whitespaces to get the objective
 
-    for obj in objectives:
-        print(obj)
-
-    return objectives
-
-def get_weighted_sum_objective_name_from_objectives(objectives):
-    name = ""
-    for objective_name in objectives:
-        name += objective_name + " & "
-    name = name[:-2] + "Weighted Sum"
-    print(name)
-    return name
-
+obj_name_sol_attr_dict = {
+    "Mission Time": "mission_time",
+    "Percentage Connectivity": "percentage_connectivity",
+    "Max Disconnected Time": "max_disconnected_time",
+    "Mean Disconnected Time": "mean_disconnected_time",
+    "Max Mean TBV": "max_mean_tbv"
+}
 
 objective_normalization_factors = {
     "Mission Time": 1000,
@@ -27,6 +14,42 @@ objective_normalization_factors = {
     "Max Disconnected Time": 1,
     "Mean Disconnected Time": 1
 }
+
+def get_objectives_from_weighted_sum_model(model):
+    assert (len(model["F"]) == 1 and "Weighted Sum" in model["F"][0]), "Model is not a Weighted Sum Model!"
+    objectives = model["F"][0].split("&")
+    objectives[0] = objectives[0][:-1] # Delete the final whitespace
+    objectives[-1] = objectives[-1].replace(" Weighted Sum", "")[1:] # Delete "Weighted Sum" part on the last objective, then delete the whitespace at the first index
+    for i in range(1, len(objectives)-1): # Iterate over all the middle idx objectives
+        objectives[i] = objectives[i][1:-1] # Delete the first and last whitespaces to get the objective
+
+    # for obj in objectives:
+        # print(obj)
+
+    return objectives
+
+def get_weighted_sum_objective_name_from_objectives(objectives):
+    name = ""
+    for objective_name in objectives:
+        name += objective_name + " & "
+    name = name[:-2] + "Weighted Sum"
+    # print(name)
+    return name
+
+def calculate_ws_score_from_ws_objective(sol):
+    assert(sol.info.model["Type"]=="WS"), "Not a WS Problem -> Can not calculate WS score !"
+    objectives = get_objectives_from_weighted_sum_model(sol.info.model)
+    ws_score = 0
+    for objective in objectives:
+        og_obj_value = getattr(sol, obj_name_sol_attr_dict[objective])
+        norm_obj_value = og_obj_value / objective_normalization_factors[objective]
+        ws_score += norm_obj_value
+        # print(f"Objective: {objective} | Original Value: {og_obj_value} | Normalized Value: {norm_obj_value}")
+    # print(f"WS Score: {ws_score}")
+
+    return ws_score
+
+
 
 
 # T MODELS

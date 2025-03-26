@@ -96,4 +96,4 @@ def plot_time_metrics(models=[TCDT_MOO_NSGA2, TC_MOO_NSGA2], merging_strategy="o
                         for fig in figs:
                             fig.savefig(f"Figures/Sensing/{parameters}_{fig.suptitle().get_text()}.png")
 
-plot_time_metrics(models=[MTSP, TCDT_WS], merging_strategy="ondrone", n_runs=2, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12], n_targets_list=[3, 4, 5], show=True)
+plot_time_metrics(models=[MTSP, TCDT_WS], merging_strategy="ondrone", n_runs=50, p0=0.5, B_list=[0.9, 0.95], p_list=[0.8, 0.9], comm_range_list=["sqrt(8)", 2], number_of_drones_list=[4, 8, 12], n_targets_list=[3, 4, 5], show=True)

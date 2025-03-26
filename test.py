@@ -1,7 +1,65 @@
 import numpy as np
 import pandas as pd
-print(np.__version__)
-print(pd.__version__)
+from PathFileManagement import load_pickle
+from FilePaths import *
+from PathOptimizationModel import calculate_ws_score_from_ws_objective, obj_name_sol_attr_dict, get_objectives_from_weighted_sum_model
+from PathSolution import *
+
+"""nvisit_scenario = f"WS_GA_TCT_g_8_a_50_n_12_v_2.5_r_sqrt(8)_nvisits_1"
+one_tour_sol = load_pickle(f"{solutions_filepath}{nvisit_scenario}-SolutionObjects.pkl")[0]
+two_tour_sol = load_pickle(f"{solutions_filepath}{nvisit_scenario.replace("nvisits_1",f"ntours_{2}")}-SolutionObjects.pkl")[0]
+print(one_tour_sol.real_time_path_matrix.shape[1], two_tour_sol.real_time_path_matrix.shape[1] )
+"""
+
+"""nvisit_scenario = f"WS_GA_TCT_g_8_a_50_n_12_v_2.5_r_sqrt(8)_nvisits_1"
+one_tour_sol = load_pickle(f"{solutions_filepath}{nvisit_scenario}-SolutionObjects.pkl")[0]
+two_tour_sol = produce_n_tour_sol(one_tour_sol, 2)
+print(f"Mission Time: {one_tour_sol.mission_time} | {two_tour_sol.mission_time}")
+print(f"Percentage Connectivity: {one_tour_sol.percentage_connectivity} | {two_tour_sol.percentage_connectivity}")
+print(f"Max Mean TBV: {one_tour_sol.max_mean_tbv} | {two_tour_sol.max_mean_tbv}")
+"""
+
+"""nvisit_scenario = f"WS_GA_TCT_g_8_a_50_n_12_v_2.5_r_sqrt(8)_nvisits_1"
+nvisit_X = load_pickle(f"{solutions_filepath}{nvisit_scenario}-SolutionObjects.pkl")
+nvisit_F = pd.read_pickle(f"{objective_values_filepath}{nvisit_scenario}-ObjectiveValues.pkl")
+nvisit_R = load_pickle(f"{runtimes_filepath}{nvisit_scenario}-Runtime.pkl")
+for ntour in range(2, 11):
+    print(f"{ntour} Tours")
+    ntour_scenario = f"WS_GA_TCT_g_8_a_50_n_12_v_2.5_r_sqrt(8)_ntours_{ntour}"
+    ntour_X = load_pickle(f"{solutions_filepath}{ntour_scenario}-SolutionObjects.pkl")
+    ntour_F = pd.read_pickle(f"{objective_values_filepath}{ntour_scenario}-ObjectiveValues.pkl")
+    ntour_R = load_pickle(f"{runtimes_filepath}{ntour_scenario}-Runtime.pkl")
+    objectives = get_objectives_from_weighted_sum_model(nvisit_X[0].info.model)
+
+    for i in range(len(ntour_X)):
+        nvisits_sol = nvisit_X[i]
+        ntours_sol = ntour_X[i]
+        for objective in objectives:
+            print(f"{objective}: {getattr(nvisits_sol, obj_name_sol_attr_dict[objective])} | {getattr(ntours_sol, obj_name_sol_attr_dict[objective])}")
+    print(f"nvisit F: {nvisit_F}\nntour F: {ntour_F}")
+    print(f"nvisit R: {nvisit_R}, ntour R: {ntour_R}")
+    print("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+"""
+
+
+
+
+
+# data = [1,2,3,4,5]
+# columns = ["test"]
+# df = pd.DataFrame(data=data, columns=columns)
+# print(df)
+
+# test = np.arange(2,10)
+# print(test)
+
+# test_sol = load_pickle("Results/Solutions/WS_GA_TCDT_g_8_a_50_n_16_v_2.5_r_2_nvisits_3-SolutionObjects.pkl")[0]
+# # print(test_sol)
+# calculate_ws_score_from_ws_objective(test_sol)
+
+
+# print(np.__version__)
+# print(pd.__version__)
 
 # test = np.array([[1,2,3],[4,5,6]])
 # print(test)

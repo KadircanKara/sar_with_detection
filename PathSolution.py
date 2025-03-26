@@ -244,14 +244,12 @@ class PathSolution():
 
     def get_visit_times(self):
         info = self.info
-        drone_path_matrix = self.real_time_path_matrix[1:,:]
+        final_search_step = max([len(q) - 2 for q in list(self.drone_dict.values())])
+        drone_path_matrix = self.real_time_path_matrix[1:,:final_search_step+1]
         visit_times = [[] for _ in range(info.number_of_cells)]
-        # print(f"Path Matrix:\n{drone_path_matrix}")
         for cell in range(info.number_of_cells):
-            # print(f"cell {cell} visit steps: {np.where(sol.real_time_path_matrix==cell)[1].tolist()}")
-            visit_times[cell] = np.sort(np.where(drone_path_matrix==cell)[1])[:info.n_visits] # Last bit is to exclude hovering steps
-
-        # print("visit times:", visit_times)
+            # visit_times[cell] = np.sort(np.where(drone_path_matrix==cell)[1])[:info.n_visits] # Last bit is to exclude hovering steps
+            visit_times[cell] = np.sort(np.where(drone_path_matrix==cell)[1])
 
         self.visit_times = visit_times
 
@@ -482,11 +480,12 @@ def produce_n_tour_sol(sol:PathSolution, n_tours:int):
 
     sol_copy.get_pathplan()
 
-    if sol_copy.calculate_tbv and sol_copy.info.n_visits>1:
-        sol_copy.get_visit_times()
-        sol_copy.get_tbv()
-        sol_copy.get_mean_tbv()
+    print(f"Original Sol Timesteps: {sol.real_time_path_matrix.shape[1]} | {n_tours} Tours Sol Timesteps: {sol_copy.real_time_path_matrix.shape[1]}")
 
+    # if sol_copy.calculate_tbv and sol_copy.info.n_visits>1:
+    sol_copy.get_visit_times()
+    sol_copy.get_tbv()
+    sol_copy.get_mean_tbv()
 
     if sol_copy.calculate_connectivity:
         # print("connectivity calculations")

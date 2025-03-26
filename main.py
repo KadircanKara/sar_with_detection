@@ -29,8 +29,8 @@ scenario = {
                         'n_visits': 1,  # Minimum number of cell visits
                         }
 
-number_of_drones_values = [12]
-comm_cell_range_values = [2,2*sqrt(2)]
+number_of_drones_values = [4]
+comm_cell_range_values = [2, 2*sqrt(2)]
 n_visits_values = [1,2,3]
 
 
